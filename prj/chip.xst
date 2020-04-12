@@ -1,0 +1,6 @@
+run
+-ifn chip.v
+-ofn chip.ngc
+-ifmt Verilog
+-top chip
+-p xc3s500e-4-vq100

@@ -1,0 +1,8 @@
+net "clk" loc="P36";
+net "clk" period=20.0ns high 50% ;
+net "led[0]" loc="P79";
+net "led[1]" loc="P83";
+net "led[2]" loc="P84";
+net "led[3]" loc="P85";
+net "rs232_dce_rxd" loc="P9";
+net "rs232_dce_txd" loc="P10";
