@@ -39,14 +39,14 @@ module top(
   reg [31:0] mem_addr1;
 
   always @(posedge clk) begin
-    mem_ready <= mem_valid;
+    mem_ready <= mem_valid  && !mem_ready;
     mem_addr1 <= mem_addr;
   end
 
   wire io_valid = mem_valid && (mem_addr[31]);
   wire reset = ~resetn;
 
-  ram_2k_32 _ram_2k_32(clk, mem_addr[12:2], mem_wdata, ram_rdata, mem_wstrb, mem_valid && !mem_addr[31]);
+  ram_2k_32 _ram_2k_32(clk, mem_addr[12:2], mem_wdata, ram_rdata, (mem_valid && !mem_ready) ? mem_wstrb : 4'b0, mem_valid && !mem_addr[31]);
 
   io _io(clk, reset, io_valid, mem_addr[4:2], mem_wdata, mem_wstrb[0], io_rdata, led[2:0], SEG_o, COM_o, rxd, txd);
 

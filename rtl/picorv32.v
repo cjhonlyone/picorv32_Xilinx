@@ -60,17 +60,13 @@ module picorv32 #(
 	parameter [ 0:0] ENABLE_COUNTERS = 1,
 	parameter [ 0:0] ENABLE_COUNTERS64 = 1,
 	parameter [ 0:0] ENABLE_REGS_16_31 = 1,
-// `ifndef XILINX_ISE_14_7
 	parameter [ 0:0] ENABLE_REGS_DUALPORT = 1,
-// `else
-// 	parameter [ 0:0] ENABLE_REGS_DUALPORT = 0,
-// `endif
 	parameter [ 0:0] LATCHED_MEM_RDATA = 0,
 	parameter [ 0:0] TWO_STAGE_SHIFT = 1,
 	parameter [ 0:0] BARREL_SHIFTER = 0,
 	parameter [ 0:0] TWO_CYCLE_COMPARE = 0,
 	parameter [ 0:0] TWO_CYCLE_ALU = 0,
-	parameter [ 0:0] COMPRESSED_ISA = 0,
+	parameter [ 0:0] COMPRESSED_ISA = 1,
 	parameter [ 0:0] CATCH_MISALIGN = 1,
 	parameter [ 0:0] CATCH_ILLINSN = 1,
 	parameter [ 0:0] ENABLE_PCPI = 0,

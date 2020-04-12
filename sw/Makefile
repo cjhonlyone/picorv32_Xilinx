@@ -1,7 +1,7 @@
-TOOLCHAIN_PREFIX = /opt/riscv32im/bin/riscv32-unknown-elf-
+TOOLCHAIN_PREFIX = /opt/riscv32imc/bin/riscv32-unknown-elf-
+CCFLAGS = -march=rv32imc
 
-
-test: test.bin makehex.py
+test: test.bin
 	python3 makehex.py $< 2048 > $(addsuffix .hex,$@)
 	python3 makehex_B0.py $< 2048 > $(addsuffix _B0.hex,$@)
 	python3 makehex_B1.py $< 2048 > $(addsuffix _B1.hex,$@)
@@ -16,13 +16,14 @@ test.bin: test.elf test.elf.S
 test.elf.S: test.elf
 	$(TOOLCHAIN_PREFIX)objdump $< -S > $@
 
-test.elf: support/start.o test.c util.c
-	$(TOOLCHAIN_PREFIX)gcc -nostdinc -fno-builtin -c util.c
-	$(TOOLCHAIN_PREFIX)gcc -nostdinc -fno-builtin -c test.c
-	$(TOOLCHAIN_PREFIX)gcc -ffreestanding -nostdlib -Wl,-Bstatic,-T,support/sections.lds support/start.o test.o util.o -lgcc -o test.elf 
+test.elf: support/sections.lds support/start.o test.c util.c
+	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -nostdinc -fno-builtin -c util.c
+	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -nostdinc -fno-builtin -c test.c
+	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -ffreestanding -nostdlib -Wl,-Bstatic,-T,support/sections.lds support/start.o test.o util.o -lgcc -o test.elf 
 
 support/start.o: support/start.S
-	$(TOOLCHAIN_PREFIX)gcc -c $< -o $@
+	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -c $< -o $@
+
 clean:
 	rm -f *.o *.elf *~ *.hex *.coe *.S
 	rm -f support/*.o

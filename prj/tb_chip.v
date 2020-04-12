@@ -25,7 +25,7 @@
 module tb_chip;
 
 	// Inputs
-	reg clk = 0;
+	reg clk = 1;
 	reg reset_async = 0;
 	reg rs232_dce_rxd = 0;
 
@@ -45,7 +45,7 @@ module tb_chip;
 	always #5 clk = ~clk;
 	
 	initial 
-		# 100 reset_async = 1;
+		# 555 reset_async = 1;
       
 endmodule
 
