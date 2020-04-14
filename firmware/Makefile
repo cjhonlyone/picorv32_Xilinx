@@ -4,12 +4,12 @@ TEST_OBJS = #$(addsuffix .o,$(basename $(wildcard tests/*.S)))
 FIRMWARE_OBJS = start.o main.o util.o #irq.o#print.o hello.o #multest.o #stats.o sieve.o
 
 firmware: firmware.bin
-	python3 ../sw/makehex.py $< 2048 > $(addsuffix .hex,$@)
-	python3 ../sw/makehex_B0.py $< 2048 > $(addsuffix _B0.hex,$@)
-	python3 ../sw/makehex_B1.py $< 2048 > $(addsuffix _B1.hex,$@)
-	python3 ../sw/makehex_B2.py $< 2048 > $(addsuffix _B2.hex,$@)
-	python3 ../sw/makehex_B3.py $< 2048 > $(addsuffix _B3.hex,$@)
-	python3 ../sw/makecoe.py $< 2048 > $(addsuffix .coe,$@)
+	python3 makehex.py $< 2048 > $(addsuffix .hex,$@)
+	python3 makehex_B0.py $< 2048 > $(addsuffix _B0.hex,$@)
+	python3 makehex_B1.py $< 2048 > $(addsuffix _B1.hex,$@)
+	python3 makehex_B2.py $< 2048 > $(addsuffix _B2.hex,$@)
+	python3 makehex_B3.py $< 2048 > $(addsuffix _B3.hex,$@)
+	python3 makecoe.py $< 2048 > $(addsuffix .coe,$@)
 
 firmware.bin: firmware.elf firmware.elf.S
 	$(TOOLCHAIN_PREFIX)objcopy -O binary $< $@;
@@ -41,6 +41,6 @@ tests/%.o: tests/%.S tests/riscv_test.h tests/test_macros.h
 	$(TOOLCHAIN_PREFIX)gcc -c -march=rv32im -o $@ -DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' -DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<
 clean:
-	rm -f *.elf *.hex *.coe *.bin
+	rm -f *.elf *.hex *.coe *.bin *.elf.S
 	rm -vrf $(FIRMWARE_OBJS) $(TEST_OBJS)
 	rm -f *.o
