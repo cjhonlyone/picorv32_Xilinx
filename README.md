@@ -25,7 +25,8 @@ mkdir build; cd build
 make -j$(nproc)
 ```
 
-- Platform: Mainly Windows
+- Platform: Mainly Windows  
+
 It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compile on Linux to get `.elf` files or `.bin` files. It doesn't matter which OS you use for ISE design tools. In this repo, `Makefile` mainly written for Windows. Cygwin is a good tools for simulating UNIX enviroment. After you download these files, you should edit your ISE paths, so can compile success. 
 
 ## Things about Soc
