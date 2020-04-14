@@ -28,6 +28,7 @@ module tb_chip;
 	reg clk = 1;
 	reg reset_async = 0;
 	reg rs232_dce_rxd = 0;
+	reg [1:0] buttons_i = 0;
 
 	// Outputs
 	wire [3:0] led;
@@ -38,6 +39,7 @@ module tb_chip;
 		.clk(clk), 
 		.reset_async(reset_async),
 		.led(led), 
+		.buttons_i(buttons_i),
 		.rs232_dce_rxd(rs232_dce_rxd), 
 		.rs232_dce_txd(rs232_dce_txd)
 	);
@@ -46,6 +48,15 @@ module tb_chip;
 	
 	initial 
 		# 555 reset_async = 1;
+		
+	reg [7:0] cnt = 0;
+	always @ (posedge clk) begin
+		cnt <= cnt + 1;
+		if ((cnt<8'hff) && (cnt>8'hfd))
+			buttons_i[0] <= 1;
+		else
+			buttons_i[0] <= 0;
+	end
       
 endmodule
 

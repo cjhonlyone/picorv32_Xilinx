@@ -5,6 +5,7 @@ module top(
   output [3:0] led,
   output [7:0] SEG_o,
   output [1:0] COM_o,
+  input [1:0] buttons_i,
   input rxd,
   output txd
 );
@@ -17,6 +18,7 @@ module top(
   wire [31:0] mem_wdata;
   wire [3:0] mem_wstrb;
   wire [31:0] mem_rdata;
+  reg [31:0] irq;
   
   picorv32 #(
     .ENABLE_REGS_DUALPORT(1),
@@ -31,9 +33,16 @@ module top(
     .mem_addr(mem_addr),
     .mem_wdata(mem_wdata),
     .mem_wstrb(mem_wstrb),
-    .mem_rdata(mem_rdata)
+    .mem_rdata(mem_rdata),
+	 .irq(irq)
   );
-
+  
+	always @(posedge clk) begin
+		irq <= 0;
+		irq[4] <= buttons_i[0];
+		irq[5] <= buttons_i[1];
+	end
+	
   wire [31:0] ram_rdata;
   wire [31:0] io_rdata;
   reg [31:0] mem_addr1;
@@ -200,10 +209,10 @@ module ram_2k_32(
 
 //`ifdef tb_chip
 //   initial begin
-//     $readmemh("../sw/test_B0.hex", _bram0.mem);
-//     $readmemh("../sw/test_B1.hex", _bram1.mem);
-//     $readmemh("../sw/test_B2.hex", _bram2.mem);
-//     $readmemh("../sw/test_B3.hex", _bram3.mem);
+//     $readmemh("../firmware/firmware_B0.hex", _bram0.mem);
+//     $readmemh("../firmware/firmware_B1.hex", _bram1.mem);
+//     $readmemh("../firmware/firmware_B2.hex", _bram2.mem);
+//     $readmemh("../firmware/firmware_B3.hex", _bram3.mem);
 //   end
 //`endif
 

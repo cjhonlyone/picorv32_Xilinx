@@ -4,6 +4,7 @@ module chip(
   output [3:0] led,
   output [7:0] SEG_o,
   output [1:0] COM_o,
+  input [1:0] buttons_i,
   input rs232_dce_rxd,
   output rs232_dce_txd
 );
@@ -12,7 +13,7 @@ module chip(
   
   reset_gen _reset_gen(clk, reset_async, resetn);
 
-  top _top(clk,resetn,led,SEG_o,COM_o,rs232_dce_rxd,rs232_dce_txd);
+  top _top(clk,resetn,led,SEG_o,COM_o,buttons_i,rs232_dce_rxd,rs232_dce_txd);
 
 endmodule
 

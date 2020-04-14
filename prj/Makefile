@@ -8,11 +8,15 @@ chip:
 	${ISE_DIR}/par -w chip_map.ncd chip.ncd chip.pcf
 	${ISE_DIR}/bitgen -w chip.ncd chip.bit chip.pcf
 
-prog: data
-	${ISE_DIR}/impact -batch impact.cmd
+#prog: data
+#	${ISE_DIR}/impact -batch impact.cmd
 
-data:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/test.elf -bt chip.bit -o b chip_mem.bit
+test.elf:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/test.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+
+firmware.elf:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+
 
 xdl:
 	${ISE_DIR}/xdl -ncd2xdl chip.ncd chip.xdl
