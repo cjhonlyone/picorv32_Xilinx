@@ -29,14 +29,35 @@ make -j$(nproc)
 
 It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compile on Linux to get `.elf` files or `.bin` files. It doesn't matter which OS you use for ISE design tools. In this repo, `Makefile` mainly written for Windows. Cygwin is a good tools for simulating UNIX enviroment. After you download these files, you should edit your ISE paths, so can compile success. 
 
-## Things about Soc
+- Compile Hardware  
+
+```bash
+# Windows os / cygwin
+cd prj
+# Compile FPGA bit stream
+make chip
+# write firmware.elf to Block RAMs
+# and program FPGA
+make firmware.elf
+```
+
+- Compile Software  
+
+```bash
+# ubuntu bash
+cd firmware
+# generate firmware.elf and some .hex for simulation
+make firmware
+```
+
+## Things about Soc  
 
 - 8KB RAM (FPGA's Block RAM)
 - Program start at 0x00000000
 - IRQ entrance at 0x00000010
 - Without standard C library  
 
-## Things about FPGA Board
+## Things about FPGA Board  
 
 - Xilinx xc3s500e-4-vq100
 - Four LEDs
@@ -44,7 +65,7 @@ It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compil
 - Two buttons
 - A LCD with two digits
 
-## Things about program
+## Things about program  
 
 - LED address at 0x80000000
 - Uart address at 0x80000004
