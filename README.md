@@ -27,7 +27,7 @@ make -j$(nproc)
 
 - Platform: Windows  
 
-~~It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compile on Linux to get `.elf` files or `.bin` files. It doesn't matter which OS you use for ISE design tools. In this repo, `Makefile` mainly written for Windows. Cygwin is a good tools for simulating UNIX enviroment. After you download these files, you should edit your ISE paths, so can compile success. ~~
+~~It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compile on Linux to get `.elf` files or `.bin` files. It doesn't matter which OS you use for ISE design tools. In this repo, `Makefile` mainly written for Windows. Cygwin is a good tools for simulating UNIX enviroment. After you download these files, you should edit your ISE paths, so can compile success.~~  
 
 Suddenly, I realized that 64 bit library can compile 32 bit program, so we can do all of these compile on Windows. The prebuilt library you can download at this page. [Prebuilt Windows Toolchain for RISC-V](https://gnutoolchains.com/risc-v/)  
 
