@@ -1,7 +1,17 @@
-TOOLCHAIN_PREFIX = /opt/riscv32imc/bin/riscv32-unknown-elf-
-CCFLAGS = -march=rv32imc
+# SHELL := /bin/bash
+
+ifeq ($(OS),Linux)
+	TOOLCHAIN_PREFIX = /opt/riscv32imc/bin/riscv32-unknown-elf-
+else
+	TOOLCHAIN_PREFIX = /cygdrive/d/SysGCC/risc-v/bin/riscv64-unknown-elf-
+endif
+
+CCFLAGS = -march=rv32im -mabi=ilp32
 TEST_OBJS = #$(addsuffix .o,$(basename $(wildcard tests/*.S)))
 FIRMWARE_OBJS = start.o main.o util.o #irq.o#print.o hello.o #multest.o #stats.o sieve.o
+
+sc:
+	echo $(SHELL)
 
 firmware: firmware.bin
 	python3 makehex.py $< 2048 > $(addsuffix .hex,$@)
@@ -9,7 +19,7 @@ firmware: firmware.bin
 	python3 makehex_B1.py $< 2048 > $(addsuffix _B1.hex,$@)
 	python3 makehex_B2.py $< 2048 > $(addsuffix _B2.hex,$@)
 	python3 makehex_B3.py $< 2048 > $(addsuffix _B3.hex,$@)
-	python3 makecoe.py $< 2048 > $(addsuffix .coe,$@)
+# 	python3 makecoe.py $< 2048 > $(addsuffix .coe,$@)
 
 firmware.bin: firmware.elf firmware.elf.S
 	$(TOOLCHAIN_PREFIX)objcopy -O binary $< $@;
