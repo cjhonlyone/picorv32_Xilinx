@@ -1,10 +1,10 @@
 # create and open the project and set project-level properties
 # DEVICE=xc3s500e-4vq100
 project new chip.xise
-project set family spartan3e
-project set device xc3s500e
-project set package vq100
-project set speed -4
+project set family zynq
+project set device xc7z020
+project set package clg400
+project set speed -2
 # add all the source HDLs and ucf
 xfile add chip.v
 xfile add ../rtl/picorv32.v ../rtl/top.v ../rtl/uart.v

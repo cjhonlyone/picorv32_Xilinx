@@ -1,4 +1,4 @@
-DEVICE=xc3s500e-4vq100
+DEVICE=xc7z020-2clg400
 ISE_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/bin/nt64
 
 chip:

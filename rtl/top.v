@@ -39,8 +39,8 @@ module top(
   
 	always @(posedge clk) begin
 		irq <= 0;
-		irq[4] <= buttons_i[0];
-		irq[5] <= buttons_i[1];
+		irq[4] <= 0;//buttons_i[0];
+		irq[5] <= 0;//buttons_i[1];
 	end
 	
   wire [31:0] ram_rdata;
@@ -55,7 +55,7 @@ module top(
   wire io_valid = mem_valid && (mem_addr[31]);
   wire reset = ~resetn;
 
-  ram_2k_32 _ram_2k_32(clk, mem_addr[12:2], mem_wdata, ram_rdata, (mem_valid && !mem_ready) ? mem_wstrb : 4'b0, mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32(clk, mem_addr[13:2], mem_wdata, ram_rdata, (mem_valid && !mem_ready) ? mem_wstrb : 4'b0, mem_valid && !mem_addr[31]);
 
   io _io(clk, reset, io_valid, mem_addr[4:2], mem_wdata, mem_wstrb[0], io_rdata, led[2:0], SEG_o, COM_o, rxd, txd);
 
@@ -193,42 +193,89 @@ reg [16:0] lcd_state;
   end  
 endmodule
 
-module ram_2k_32(
+// module ram_2k_32(
+//   input clk,
+//   input [10:0] addr,
+//   input [31:0] din,
+//   output [31:0] dout,
+//   input [3:0] we,
+//   input en
+// );
+
+//   bram_2k_8 _bram0(clk, addr, din[7:0], dout[7:0], we[0], en);
+//   bram_2k_8 _bram1(clk, addr, din[15:8], dout[15:8], we[1], en);
+//   bram_2k_8 _bram2(clk, addr, din[23:16], dout[23:16], we[2], en);
+//   bram_2k_8 _bram3(clk, addr, din[31:24], dout[31:24], we[3], en);
+
+// //`ifdef tb_chip
+// //   initial begin
+// //     $readmemh("../firmware/firmware_B0.hex", _bram0.mem);
+// //     $readmemh("../firmware/firmware_B1.hex", _bram1.mem);
+// //     $readmemh("../firmware/firmware_B2.hex", _bram2.mem);
+// //     $readmemh("../firmware/firmware_B3.hex", _bram3.mem);
+// //   end
+// //`endif
+
+// endmodule
+
+// module bram_2k_8(
+//   input clk,
+//   input [10:0] addr,
+//   input [7:0] din,
+//   output [7:0] dout,
+//   input we,
+//   input en
+// );
+
+//   reg [7:0] mem[0:2047];
+//   reg [10:0] addr1;
+
+//   always @(posedge clk)
+//     if (en) begin
+//       addr1 <= addr;
+//       if (we)
+//         mem[addr] <= din;
+//     end      
+
+//   assign dout = mem[addr1];
+
+// endmodule
+
+module ram_4k_32(
   input clk,
-  input [10:0] addr,
+  input [11:0] addr,
   input [31:0] din,
   output [31:0] dout,
   input [3:0] we,
   input en
 );
 
-  bram_2k_8 _bram0(clk, addr, din[7:0], dout[7:0], we[0], en);
-  bram_2k_8 _bram1(clk, addr, din[15:8], dout[15:8], we[1], en);
-  bram_2k_8 _bram2(clk, addr, din[23:16], dout[23:16], we[2], en);
-  bram_2k_8 _bram3(clk, addr, din[31:24], dout[31:24], we[3], en);
+  bram_4k_8 _bram0(clk, addr, din[7:0], dout[7:0], we[0], en);
+  bram_4k_8 _bram1(clk, addr, din[15:8], dout[15:8], we[1], en);
+  bram_4k_8 _bram2(clk, addr, din[23:16], dout[23:16], we[2], en);
+  bram_4k_8 _bram3(clk, addr, din[31:24], dout[31:24], we[3], en);
 
-//`ifdef tb_chip
+
 //   initial begin
 //     $readmemh("../firmware/firmware_B0.hex", _bram0.mem);
 //     $readmemh("../firmware/firmware_B1.hex", _bram1.mem);
 //     $readmemh("../firmware/firmware_B2.hex", _bram2.mem);
 //     $readmemh("../firmware/firmware_B3.hex", _bram3.mem);
 //   end
-//`endif
 
 endmodule
 
-module bram_2k_8(
+module bram_4k_8(
   input clk,
-  input [10:0] addr,
+  input [11:0] addr,
   input [7:0] din,
   output [7:0] dout,
   input we,
   input en
 );
 
-  reg [7:0] mem[0:2047];
-  reg [10:0] addr1;
+  reg [7:0] mem[0:4095];
+  reg [11:0] addr1;
 
   always @(posedge clk)
     if (en) begin
@@ -240,7 +287,6 @@ module bram_2k_8(
   assign dout = mem[addr1];
 
 endmodule
-
 module uart_baud_clock_16x(
   input clk,
   output baudclk16

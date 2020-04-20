@@ -29,7 +29,7 @@ int main()
 	b = 2;
 	while(1)
 	{
-		for (j = 0;j<1000;j++) // 400ms
+		for (j = 0;j<8000;j++) // 1600ms
 		delay(1000); // 400us
 
 		led(i);

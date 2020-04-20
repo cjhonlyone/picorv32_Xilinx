@@ -19,7 +19,11 @@
 // Only save registers in IRQ wrapper that are to be saved by the caller in
 // the RISC-V ABI, with the excpetion of the stack pointer. The IRQ handler
 // will save the rest if necessary. I.e. skip x3, x4, x8, x9, and x18-x27.
+
+// "skip x3, x4, x8, x9, and x18-x27." it is wrong
 #undef ENABLE_FASTIRQ
+// TODO
+// #def ENABLE_FASTIRQ need to be check
 
 #include "custom_ops.S"
 
@@ -68,21 +72,20 @@ irq_vec:
 	sw x2,   2*4(x1)
 
 #ifdef ENABLE_FASTIRQ
-	sw x5,   5*4(x1)
-	sw x6,   6*4(x1)
-	sw x7,   7*4(x1)
-	sw x10, 10*4(x1)
-	sw x11, 11*4(x1)
-	sw x12, 12*4(x1)
-	sw x13, 13*4(x1)
-	sw x14, 14*4(x1)
-	sw x15, 15*4(x1)
-	sw x16, 16*4(x1)
-	sw x17, 17*4(x1)
-	sw x28, 28*4(x1)
-	sw x29, 29*4(x1)
-	sw x30, 30*4(x1)
-	sw x31, 31*4(x1)
+	sw x3,   3*4(x1)
+	sw x4,   4*4(x1)
+	sw x8,   8*4(x1)
+	sw x9,   9*4(x1)
+	sw x18, 18*4(x1)
+	sw x19, 19*4(x1)
+	sw x20, 20*4(x1)
+	sw x21, 21*4(x1)
+	sw x22, 22*4(x1)
+	sw x23, 23*4(x1)
+	sw x24, 24*4(x1)
+	sw x25, 25*4(x1)
+	sw x26, 26*4(x1)
+	sw x27, 27*4(x1)
 #else
 	sw x3,   3*4(x1)
 	sw x4,   4*4(x1)
@@ -148,21 +151,20 @@ irq_vec:
 	picorv32_setq_insn(q2, x2)
 
 #ifdef ENABLE_FASTIRQ
-	lw x5,   5*4(x1)
-	lw x6,   6*4(x1)
-	lw x7,   7*4(x1)
-	lw x10, 10*4(x1)
-	lw x11, 11*4(x1)
-	lw x12, 12*4(x1)
-	lw x13, 13*4(x1)
-	lw x14, 14*4(x1)
-	lw x15, 15*4(x1)
-	lw x16, 16*4(x1)
-	lw x17, 17*4(x1)
-	lw x28, 28*4(x1)
-	lw x29, 29*4(x1)
-	lw x30, 30*4(x1)
-	lw x31, 31*4(x1)
+	lw x3,   3*4(x1)
+	lw x4,   4*4(x1)
+	lw x8,   8*4(x1)
+	lw x9,   9*4(x1)
+	lw x18, 18*4(x1)
+	lw x19, 19*4(x1)
+	lw x20, 20*4(x1)
+	lw x21, 21*4(x1)
+	lw x22, 22*4(x1)
+	lw x23, 23*4(x1)
+	lw x24, 24*4(x1)
+	lw x25, 25*4(x1)
+	lw x26, 26*4(x1)
+	lw x27, 27*4(x1)
 #else
 	lw x3,   3*4(x1)
 	lw x4,   4*4(x1)
@@ -253,7 +255,7 @@ start:
 	addi x31, zero, 0
 
 	/* set stack pointer */
-	lui sp,(8*1024)>>12
+	lui sp,(4*4096)>>12
 
 	/* call main C code */
 	jal ra,main

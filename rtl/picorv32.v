@@ -2575,20 +2575,36 @@ module four_stage_signed_35x35_multiply(
      output reg [69:0] P);
 
 // Pipeline state 0:  Perform all multiplies
-wire [35:0] p0a, p2a, p3a;
-wire [33:0] p1a;
-MULT18X18S mul0 (.C(clock), .CE(1'b1), .R(1'b0), .P(p0a),
-.A(A[34:17]),
-.B(B[34:17]));
-MULT18X18S mul1 (.C(clock), .CE(1'b1), .R(1'b0), .P(p1a),
-.A({1'b0,
-A[16:0]}), .B({1'b0, B[16:0]}));
-MULT18X18S mul2 (.C(clock), .CE(1'b1), .R(1'b0), .P(p2a),
-.A(A[34:17]),
-.B({1'b0, B[16:0]}));
-MULT18X18S mul3 (.C(clock), .CE(1'b1), .R(1'b0), .P(p3a),
-.A({1'b0,
-A[16:0]}), .B(B[34:17]));
+	wire [35:0] p0a, p2a, p3a;
+	wire [33:0] p1a;
+	// MULT18X18S mul0 (.C(clock), .CE(1'b1), .R(1'b0), .P(p0a),
+	// .A(A[34:17]),
+	// .B(B[34:17]));
+	// MULT18X18S mul1 (.C(clock), .CE(1'b1), .R(1'b0), .P(p1a),
+	// .A({1'b0,A[16:0]}), .B({1'b0, B[16:0]}));
+	// MULT18X18S mul2 (.C(clock), .CE(1'b1), .R(1'b0), .P(p2a),
+	// .A(A[34:17]),.B({1'b0, B[16:0]}));
+	// MULT18X18S mul3 (.C(clock), .CE(1'b1), .R(1'b0), .P(p3a),
+	// .A({1'b0,A[16:0]}), .B(B[34:17]));
+	// MULT_MACRO: Multiply Function implemented in a DSP48E
+	// 7 Series
+	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst0 (
+	.A(A[34:17]), .B(B[34:17]),.P(p0a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst1 (
+	.A({1'b0,A[16:0]}), .B({1'b0,B[16:0]}),.P(p1a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst2 (
+	.A(A[34:17]), .B({1'b0, B[16:0]}),.P(p2a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst3 (
+	.A({1'b0,A[16:0]}), .B(B[34:17]),.P(p3a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+
 
 // Pipeline stage 1:  Sum middle terms
 reg [35:0] p0b, p2b;

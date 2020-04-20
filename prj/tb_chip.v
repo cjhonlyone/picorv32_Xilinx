@@ -38,10 +38,10 @@ module tb_chip;
 	chip uut (
 		.clk(clk), 
 		.reset_async(reset_async),
-		.led(led), 
-		.buttons_i(buttons_i),
-		.rs232_dce_rxd(rs232_dce_rxd), 
-		.rs232_dce_txd(rs232_dce_txd)
+		.led(led)
+		// .buttons_i(buttons_i),
+		// .rs232_dce_rxd(rs232_dce_rxd), 
+		// .rs232_dce_txd(rs232_dce_txd)
 	);
 	
 	always #5 clk = ~clk;
@@ -50,13 +50,13 @@ module tb_chip;
 		# 555 reset_async = 1;
 		
 	reg [7:0] cnt = 0;
-	always @ (posedge clk) begin
-		cnt <= cnt + 1;
-		if ((cnt<8'hff) && (cnt>8'hfd))
-			buttons_i[0] <= 1;
-		else
-			buttons_i[0] <= 0;
-	end
+	// always @ (posedge clk) begin
+	// 	cnt <= cnt + 1;
+	// 	if ((cnt<8'hff) && (cnt>8'hfd))
+	// 		buttons_i[0] <= 1;
+	// 	else
+	// 		buttons_i[0] <= 0;
+	// end
       
 endmodule
 

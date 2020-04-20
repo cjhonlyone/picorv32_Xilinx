@@ -1,33 +1,13 @@
-NET "clk" LOC = P36;
-NET "clk" PERIOD = 20.0ns high 50% ;
-NET "SEG_o[0]" LOC = P12;
-NET "SEG_o[1]" LOC = P24;
-NET "SEG_o[2]" LOC = P22;
-NET "SEG_o[3]" LOC = P17;
-NET "SEG_o[4]" LOC = P16;
-NET "SEG_o[5]" LOC = P15;
-NET "SEG_o[6]" LOC = P18;
-NET "SEG_o[7]" LOC = P23;
+NET "clk" 	LOC = Y7  |  IOSTANDARD = LVCMOS33;
+NET "clk" PERIOD = 10.0ns high 50% ;
 
-NET "COM_o[0]" LOC = P26;
-NET "COM_o[1]" LOC = P27;
-#NET "switches_i[0]" LOC = P32;
-#NET "switches_i[1]" LOC = P33;
+NET "CLK_IN1" TNM_NET = "CLK_IN1";
+TIMESPEC "TS_CLK_IN1" = PERIOD "CLK_IN1" 10.0 ns HIGH 50% INPUT_JITTER 100.0ps;
 
+NET "reset_async" 		LOC = W6  |  IOSTANDARD = LVCMOS33;
 
-NET "reset_async" LOC = P11 | PULLUP;
+NET "led[3]" LOC=J15  |  IOSTANDARD = LVCMOS18;
+NET "led[2]" LOC=G14  |  IOSTANDARD = LVCMOS18;
+NET "led[1]" LOC=T19  |  IOSTANDARD = LVCMOS33;
+NET "led[0]" LOC=R19  |  IOSTANDARD = LVCMOS33;
 
-NET "led[0]" LOC = P79;
-NET "led[1]" LOC = P83;
-NET "led[2]" LOC = P84;
-NET "led[3]" LOC = P85;
-#NET "AD_CS" LOC = P62;
-#NET "AD_SDO" LOC = P58;
-#NET "AD_SDI" LOC = P60;
-#NET "AD_SCLK" LOC = P61;
-
-#NET "buttons_i[0]" LOC = P2;
-#NET "buttons_i[1]" LOC = P3;
-
-NET "rs232_dce_txd" LOC = P10;
-NET "rs232_dce_rxd" LOC = P9;

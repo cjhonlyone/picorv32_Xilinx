@@ -3,4 +3,4 @@ run
 -ofn chip.ngc
 -ifmt Verilog
 -top chip
--p xc3s500e-4-vq100
+-p xc7z020-2clg400

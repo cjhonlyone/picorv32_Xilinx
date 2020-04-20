@@ -9,16 +9,17 @@ endif
 CCFLAGS = -march=rv32im -mabi=ilp32
 TEST_OBJS = #$(addsuffix .o,$(basename $(wildcard tests/*.S)))
 FIRMWARE_OBJS = start.o main.o util.o #irq.o#print.o hello.o #multest.o #stats.o sieve.o
+RAM_SIZE = 4096
 
 sc:
 	echo $(SHELL)
 
 firmware: firmware.bin
-	python3 makehex.py $< 2048 > $(addsuffix .hex,$@)
-	python3 makehex_B0.py $< 2048 > $(addsuffix _B0.hex,$@)
-	python3 makehex_B1.py $< 2048 > $(addsuffix _B1.hex,$@)
-	python3 makehex_B2.py $< 2048 > $(addsuffix _B2.hex,$@)
-	python3 makehex_B3.py $< 2048 > $(addsuffix _B3.hex,$@)
+# 	python3 makehex.py $< $(RAM_SIZE) > $(addsuffix .hex,$@)
+	python3 makehex_B0.py $< $(RAM_SIZE) > $(addsuffix _B0.hex,$@)
+	python3 makehex_B1.py $< $(RAM_SIZE) > $(addsuffix _B1.hex,$@)
+	python3 makehex_B2.py $< $(RAM_SIZE) > $(addsuffix _B2.hex,$@)
+	python3 makehex_B3.py $< $(RAM_SIZE) > $(addsuffix _B3.hex,$@)
 # 	python3 makecoe.py $< 2048 > $(addsuffix .coe,$@)
 
 firmware.bin: firmware.elf firmware.elf.S
