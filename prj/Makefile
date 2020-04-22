@@ -11,10 +11,10 @@ chip:
 #prog: data
 #	${ISE_DIR}/impact -batch impact.cmd
 
-test.elf:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/test.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+test:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
 
-firmware.elf:
+firmware:
 	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
 
 

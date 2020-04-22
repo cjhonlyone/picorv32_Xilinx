@@ -43,7 +43,14 @@ module top(
 		irq[5] <= 0;//buttons_i[1];
 	end
 	
-  wire [31:0] ram_rdata;
+  wire [31:0] ram_rdata_0;
+  wire [31:0] ram_rdata_1;
+  wire [31:0] ram_rdata_2;
+  wire [31:0] ram_rdata_3;
+  wire [31:0] ram_rdata_4;
+  wire [31:0] ram_rdata_5;
+  wire [31:0] ram_rdata_6;
+  wire [31:0] ram_rdata_7;
   wire [31:0] io_rdata;
   reg [31:0] mem_addr1;
 
@@ -55,11 +62,85 @@ module top(
   wire io_valid = mem_valid && (mem_addr[31]);
   wire reset = ~resetn;
 
-  ram_4k_32 _ram_4k_32(clk, mem_addr[13:2], mem_wdata, ram_rdata, (mem_valid && !mem_ready) ? mem_wstrb : 4'b0, mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_0(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_0, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b000)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_1(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_1, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b001)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_2(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_2, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b010)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_3(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_3, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b011)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
 
+  ram_4k_32 _ram_4k_32_4(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_4, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b100)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_5(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_5, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b101)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_6(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_6, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b110)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_7(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_7, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b111)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+
+   initial begin
+   $readmemh("../sw/firmwareram00.hex", _ram_4k_32_0._bram0.mem);
+   $readmemh("../sw/firmwareram01.hex", _ram_4k_32_0._bram1.mem);
+   $readmemh("../sw/firmwareram02.hex", _ram_4k_32_0._bram2.mem);
+   $readmemh("../sw/firmwareram03.hex", _ram_4k_32_0._bram3.mem);
+   $readmemh("../sw/firmwareram04.hex", _ram_4k_32_1._bram0.mem);
+   $readmemh("../sw/firmwareram05.hex", _ram_4k_32_1._bram1.mem);
+   $readmemh("../sw/firmwareram06.hex", _ram_4k_32_1._bram2.mem);
+   $readmemh("../sw/firmwareram07.hex", _ram_4k_32_1._bram3.mem);
+   $readmemh("../sw/firmwareram08.hex", _ram_4k_32_2._bram0.mem);
+   $readmemh("../sw/firmwareram09.hex", _ram_4k_32_2._bram1.mem);
+   $readmemh("../sw/firmwareram10.hex", _ram_4k_32_2._bram2.mem);
+   $readmemh("../sw/firmwareram11.hex", _ram_4k_32_2._bram3.mem);
+   $readmemh("../sw/firmwareram12.hex", _ram_4k_32_3._bram0.mem);
+   $readmemh("../sw/firmwareram13.hex", _ram_4k_32_3._bram1.mem);
+   $readmemh("../sw/firmwareram14.hex", _ram_4k_32_3._bram2.mem);
+   $readmemh("../sw/firmwareram15.hex", _ram_4k_32_3._bram3.mem);
+   $readmemh("../sw/firmwareram16.hex", _ram_4k_32_4._bram0.mem);
+   $readmemh("../sw/firmwareram17.hex", _ram_4k_32_4._bram1.mem);
+   $readmemh("../sw/firmwareram18.hex", _ram_4k_32_4._bram2.mem);
+   $readmemh("../sw/firmwareram19.hex", _ram_4k_32_4._bram3.mem);
+   $readmemh("../sw/firmwareram20.hex", _ram_4k_32_5._bram0.mem);
+   $readmemh("../sw/firmwareram21.hex", _ram_4k_32_5._bram1.mem);
+   $readmemh("../sw/firmwareram22.hex", _ram_4k_32_5._bram2.mem);
+   $readmemh("../sw/firmwareram23.hex", _ram_4k_32_5._bram3.mem);
+   $readmemh("../sw/firmwareram24.hex", _ram_4k_32_6._bram0.mem);
+   $readmemh("../sw/firmwareram25.hex", _ram_4k_32_6._bram1.mem);
+   $readmemh("../sw/firmwareram26.hex", _ram_4k_32_6._bram2.mem);
+   $readmemh("../sw/firmwareram27.hex", _ram_4k_32_6._bram3.mem);
+   $readmemh("../sw/firmwareram28.hex", _ram_4k_32_7._bram0.mem);
+   $readmemh("../sw/firmwareram29.hex", _ram_4k_32_7._bram1.mem);
+   $readmemh("../sw/firmwareram30.hex", _ram_4k_32_7._bram2.mem);
+   $readmemh("../sw/firmwareram31.hex", _ram_4k_32_7._bram3.mem);
+   end		
   io _io(clk, reset, io_valid, mem_addr[4:2], mem_wdata, mem_wstrb[0], io_rdata, led[2:0], SEG_o, COM_o, rxd, txd);
 
-  assign mem_rdata = mem_addr1[31] ? io_rdata : ram_rdata;
+  assign mem_rdata = mem_addr1[31] ? io_rdata : 
+              (mem_addr1[16:14] == 3'b000) ? ram_rdata_0 : 
+              (mem_addr1[16:14] == 3'b001) ? ram_rdata_1 : 
+              (mem_addr1[16:14] == 3'b010) ? ram_rdata_2 : 
+              (mem_addr1[16:14] == 3'b011) ? ram_rdata_3 : 
+              (mem_addr1[16:14] == 3'b100) ? ram_rdata_4 : 
+              (mem_addr1[16:14] == 3'b101) ? ram_rdata_5 : 
+              (mem_addr1[16:14] == 3'b110) ? ram_rdata_6 : ram_rdata_7;
+
   assign led[3] = trap;
   
 //wire [35:0] CONTROL0;
@@ -254,7 +335,6 @@ module ram_4k_32(
   bram_4k_8 _bram1(clk, addr, din[15:8], dout[15:8], we[1], en);
   bram_4k_8 _bram2(clk, addr, din[23:16], dout[23:16], we[2], en);
   bram_4k_8 _bram3(clk, addr, din[31:24], dout[31:24], we[3], en);
-
 
 //   initial begin
 //     $readmemh("../firmware/firmware_B0.hex", _bram0.mem);

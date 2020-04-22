@@ -10,18 +10,57 @@
 from sys import argv
 
 binfile = argv[1]
-nwords = int(argv[2])
+ramsize = int(argv[2])
+blockramsize = int(argv[3])
+
+#binfile = 'firmware.bin' #argv[1]
+#ramsize = 131072 #int(argv[2])
+#blockramsize = 4096 #int(argv[3])
+
+ramnum = int(ramsize/blockramsize)
+ramidx = 0
 
 with open(binfile, "rb") as f:
     bindata = f.read()
 
-assert len(bindata) < 4*nwords
+assert len(bindata) < 4*ramsize
 assert len(bindata) % 4 == 0
 
-for i in range(nwords):
+f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+ramidx = ramidx + 1
+f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+ramidx = ramidx + 1
+f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+ramidx = ramidx + 1
+f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+ramidx = ramidx + 1
+
+blockramsize = blockramsize*4
+
+for i in range(ramsize):
     if i < len(bindata) // 4:
         w = bindata[4*i : 4*i+4]
-        print("%02x%02x%02x%02x" % (w[3], w[2], w[1], w[0]))
+        f0.write("%02x\n" % (w[0]))
+        f1.write("%02x\n" % (w[1]))
+        f2.write("%02x\n" % (w[2]))
+        f3.write("%02x\n" % (w[3]))
     else:
-        print("0")
+        f0.write("00\n")
+        f1.write("00\n")
+        f2.write("00\n")
+        f3.write("00\n")
 
+    if (i & (blockramsize - 1) == (blockramsize - 1) ):
+        f0.close()
+        f1.close()
+        f2.close()
+        f3.close()
+        if (ramidx != ramnum) :
+            f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            ramidx = ramidx + 1
+            f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            ramidx = ramidx + 1
+            f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            ramidx = ramidx + 1
+            f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            ramidx = ramidx + 1

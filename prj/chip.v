@@ -16,7 +16,8 @@ module chip(
   wire resetn;
 	pll _pll(.CLK_IN1(clk),.CLK_OUT1(CLK_OUT1), .RESET(1'b0), .LOCKED(LOCKED)); 
 	 
-  reset_gen _reset_gen(CLK_OUT1, reset_async & LOCKED, resetn);
+  reset_gen _reset_gen(CLK_OUT1, reset_async & LOCKED
+				, resetn);
 
   top _top(CLK_OUT1,resetn,led); //,SEG_o,COM_o,buttons_i,rs232_dce_rxd,rs232_dce_txd);
 
@@ -87,7 +88,7 @@ module pll
     .DIVCLK_DIVIDE        (1),
     .CLKFBOUT_MULT        (8),
     .CLKFBOUT_PHASE       (0.000),
-    .CLKOUT0_DIVIDE       (4),
+    .CLKOUT0_DIVIDE       (8),
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKIN1_PERIOD        (10.0),

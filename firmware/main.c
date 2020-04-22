@@ -3,7 +3,7 @@
 //#include <stdbool.h>
 #define uint32_t unsigned int
 #define uint16_t unsigned short
-#define uint16_t unsigned char
+#define uint8_t unsigned char
 #define sint32_t signed int
 #define sint16_t signed short
 #define sint8_t signed char
