@@ -1,0 +1,6 @@
+set_property -dict {PACKAGE_PIN Y7  IOSTANDARD LVCMOS33}  [get_ports clk]
+set_property -dict {PACKAGE_PIN W6  IOSTANDARD LVCMOS33}  [get_ports reset_async]
+set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS18}  [get_ports led[3]]
+set_property -dict {PACKAGE_PIN G14 IOSTANDARD LVCMOS18}  [get_ports led[2]]
+set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVCMOS33}  [get_ports led[1]]
+set_property -dict {PACKAGE_PIN R19 IOSTANDARD LVCMOS33}  [get_ports led[0]]

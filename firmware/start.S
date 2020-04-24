@@ -376,9 +376,9 @@ start:
 	li a1, 123456789
 	sw a1,0(a0)
 
-# nooop:
-# 	nop
-# 	j nooop	
+nooop:
+	nop
+	j nooop	
 
 	/* trap */
 	ebreak
