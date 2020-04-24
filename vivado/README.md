@@ -1,4 +1,4 @@
-### These are some scripts for vivado.
+# These are some scripts for vivado.
 #### chip.tcl synth->opt->place->route->write bitstream
 #### write_mmi.tcl generate mmi file
 #### prog.tcl program fpga
