@@ -1,6 +1,6 @@
 # SHELL := /bin/bash
 
-ifeq ($(OS),Linux)
+ifneq ($(OS),Windows_NT)
 	TOOLCHAIN_PREFIX = /opt/riscv32imc/bin/riscv32-unknown-elf-
 else
 	TOOLCHAIN_PREFIX = /cygdrive/d/SysGCC/risc-v/bin/riscv64-unknown-elf-
