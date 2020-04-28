@@ -12,7 +12,7 @@ set_param general.maxThreads 8
 # STEP#2: setup design sources and constraints
 #
 # read_vhdl -library bftLib [ glob ./Sources/hdl/bftLib/*.vhdl ]
-read_verilog [ glob ../prj/*.v ]
+read_verilog [ glob ../ise/*.v ]
 read_verilog [ glob ../rtl/*.v ]
 
 read_xdc ./chip.xdc 

@@ -1,6 +1,4 @@
-# A Picorv32 On Spartan3E  
-
-For there are some people say they can not compile PicoRV32 by ISE, so I do some changes for them.  
+# A Picorv32 On Zynq
 
 ## How To Compile  
 
@@ -27,20 +25,30 @@ make -j$(nproc)
 
 - Platform: Windows  
 
-~~It is hard to compile riscv-unknow-elf-gcc on Windows, so c programs must compile on Linux to get `.elf` files or `.bin` files. It doesn't matter which OS you use for ISE design tools. In this repo, `Makefile` mainly written for Windows. Cygwin is a good tools for simulating UNIX enviroment. After you download these files, you should edit your ISE paths, so can compile success.~~  
-
 Suddenly, I realized that 64 bit library can compile 32 bit program, so we can do all of these compile on Windows. The prebuilt library you can download at this page. [Prebuilt Windows Toolchain for RISC-V](https://gnutoolchains.com/risc-v/)  
 
 - Compile Hardware  
 
 ```bash
 # Windows os / cygwin
-cd prj
+# ISE
+cd ise
 # Compile FPGA bit stream
 make chip
 # write firmware.elf to Block RAMs
 # and program FPGA
-make firmware.elf
+make firmware
+# or generate ise gui project
+make gui
+
+# vivado
+# Compile FPGA bit stream
+make chip_syn
+# write firmware.elf to Block RAMs
+make chip_mmi
+# and program FPGA
+make chip_prog
+
 ```
 
 - Compile Software  
@@ -54,14 +62,14 @@ make firmware
 
 ## Things about Soc  
 
-- 8KB RAM (FPGA's Block RAM)
+- 128KB RAM (FPGA's Block RAM)
 - Program start at 0x00000000
 - IRQ entrance at 0x00000010
 - Without standard C library  
 
 ## Things about FPGA Board  
 
-- Xilinx xc3s500e-4-vq100
+- Xilinx xc7z020clg400-2
 - Four LEDs
 - Two switches
 - Two buttons
@@ -75,14 +83,22 @@ make firmware
 - [m] ISA made by a four stage pipeline multiplier
 
 ## Utilization  
-|      |      |      |
-| :----: | :----: | :----: |
-|  Number of BUFGMUXs    |  1 out of 24    |   4%   |
-|  Number of MULT18X18SIOs     |  4 out of 20    |    20%   |
-|  Number of RAMB16s   |  4 out of 20    |   20%    |
-| Number of Slices |2203 out of 4656|47%|
-| Number of SLICEMs  |243 out of 2328|10%|
 
+|  ISE    |      |      |
+| :----: | :----: | :----: |
+|  Number of BUFGs    |   2 out of 32      |   6%   |
+|  Number of DSP48E1s     |  4 out of 20    |    20%   |
+|  Number of RAMB36E1s   |  32 out of 140    |   22%    |
+| Number of Slices |1237 out of 13300|9%|
+| Number of Slice Registers  |2360 out of 106400|2%|
+
+|  vivado    |      |      |
+| :----: | :----: | :----: |
+|  Number of BUFGs    |   2 out of 32      |   6%   |
+|  Number of DSP48E1s     |  4 out of 20    |    20%   |
+|  Number of RAMB36E1s   |  32 out of 140    |   22%    |
+| Number of Slices |0 out of 13300|0%|
+| Number of Slice Registers  |1294 out of 106400|1%|
 ## TODO
 - interrupt controller
 - flash controller
