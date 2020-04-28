@@ -1,4 +1,4 @@
-*.v linguist-language=verilog
 *.s linguist-language=verilog
-*.c linguist-language=c
-
+*.S linguist-language=verilog
+*.v linguist-language=verilog
+*.c linguist-language=verilog
