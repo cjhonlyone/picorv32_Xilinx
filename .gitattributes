@@ -1,1 +1,3 @@
 *.s linguist-language=verilog
+*.v linguist-language=verilog
+*.c linguist-language=verilog
