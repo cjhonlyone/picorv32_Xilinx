@@ -1,4 +1,4 @@
-DEVICE=xc7z020-2clg400
+DEVICE=xc6vlx75t-1ff484
 ISE_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/bin/nt64
 
 chip:
@@ -12,10 +12,12 @@ chip:
 #	${ISE_DIR}/impact -batch impact.cmd
 
 test:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/impact -batch impact.cmd
 
 firmware:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/impact -batch impact.cmd
 
 
 xdl:
@@ -23,8 +25,6 @@ xdl:
 
 gui: 
 	${ISE_DIR}/xtclsh makegui.tcl
-
-
 
 clean:
 	rm -f *~

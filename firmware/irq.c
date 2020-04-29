@@ -51,7 +51,7 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 		// print_str("[TIMER-IRQ]");
 		*(volatile unsigned int*)0x80000000 = i;
 		i++;
-		enable_timer(100000000);
+		enable_timer(125000000);
 	}
 
 	if ((irqs & 6) != 0)

@@ -1,7 +1,8 @@
 module chip(
-  input clk,
-  input reset_async,
-  output [3:0] led
+  input FCLKIN_P,
+  input FCLKIN_N,
+  input FPGA_RESET,
+  output [3:0] F_LED
   // output [7:0] SEG_o,
   // output [1:0] COM_o,
   // input [1:0] buttons_i,
@@ -9,17 +10,28 @@ module chip(
   // output rs232_dce_txd
 );
 	wire LOCKED;
-// PLLE2_ADV: Advanced Phase Locked Loop (PLL)
-// 7 Series
-// Xilinx HDL Libraries Guide, version 14.7
 
   wire resetn;
-	pll _pll(.CLK_IN1(clk),.CLK_OUT1(CLK_OUT1), .RESET(1'b0), .LOCKED(LOCKED)); 
+	dcm _pll(.CLK_IN1_P(FCLKIN_P),.CLK_IN1_N(FCLKIN_N),.
+    CLK_OUT1(CLK_OUT1), .RESET(1'b0), .LOCKED(LOCKED)); 
 	 
-  reset_gen _reset_gen(CLK_OUT1, reset_async & LOCKED
-				, resetn);
+  reset_gen _reset_gen
+    (
+    .clk(CLK_OUT1), 
+    .reset_async(FPGA_RESET & LOCKED), 
+    .resetn(resetn)
+    );
 
-  top _top(CLK_OUT1,resetn,led); //,SEG_o,COM_o,buttons_i,rs232_dce_rxd,rs232_dce_txd);
+  wire [1:0] led;
+  top _top
+    (
+      .clk       (CLK_OUT1),
+      .resetn    (resetn),
+      .led       ({led, F_LED[1:0]}),
+      .rxd       (1'b1),
+      .txd       (F_LED[2])
+    );
+  assign F_LED[3] = 0;
 
 endmodule
 
@@ -41,9 +53,12 @@ module reset_gen(
   assign resetn = !x[7];
 
 endmodule
-module pll
+
+//(* CORE_GENERATION_INFO = "dcm,clk_wiz_v3_6,{component_name=dcm,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=MMCM_ADV,num_out_clk=1,clkin1_period=8.000,clkin2_period=10.000,use_power_down=false,use_reset=true,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=MANUAL,manual_override=false}" *)
+module dcm
  (// Clock in ports
-  input         CLK_IN1,
+  input         CLK_IN1_P,
+  input         CLK_IN1_N,
   // Clock out ports
   output        CLK_OUT1,
   // Status and control signals
@@ -53,9 +68,10 @@ module pll
 
   // Input buffering
   //------------------------------------
-  IBUFG clkin1_buf
-   (.O (clkin1),
-    .I (CLK_IN1));
+  IBUFGDS clkin1_buf
+   (.O  (clkin1),
+    .I  (CLK_IN1_P),
+    .IB (CLK_IN1_N));
 
 
   // Clocking primitive
@@ -82,26 +98,37 @@ module pll
   wire        clkfbstopped_unused;
   wire        clkinstopped_unused;
 
-  PLLE2_ADV
+  MMCM_ADV
   #(.BANDWIDTH            ("OPTIMIZED"),
+    .CLKOUT4_CASCADE      ("FALSE"),
+    .CLOCK_HOLD           ("FALSE"),
     .COMPENSATION         ("ZHOLD"),
+    .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT        (8),
+    .CLKFBOUT_MULT_F      (8.000),
     .CLKFBOUT_PHASE       (0.000),
-    .CLKOUT0_DIVIDE       (8),
+    .CLKFBOUT_USE_FINE_PS ("FALSE"),
+    .CLKOUT0_DIVIDE_F     (8.000),
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
-    .CLKIN1_PERIOD        (10.0),
+    .CLKOUT0_USE_FINE_PS  ("FALSE"),
+    .CLKIN1_PERIOD        (8.000),
     .REF_JITTER1          (0.010))
-  plle2_adv_inst
+  mmcm_adv_inst
     // Output clocks
    (.CLKFBOUT            (clkfbout),
+    .CLKFBOUTB           (clkfboutb_unused),
     .CLKOUT0             (clkout0),
+    .CLKOUT0B            (clkout0b_unused),
     .CLKOUT1             (clkout1_unused),
+    .CLKOUT1B            (clkout1b_unused),
     .CLKOUT2             (clkout2_unused),
+    .CLKOUT2B            (clkout2b_unused),
     .CLKOUT3             (clkout3_unused),
+    .CLKOUT3B            (clkout3b_unused),
     .CLKOUT4             (clkout4_unused),
     .CLKOUT5             (clkout5_unused),
+    .CLKOUT6             (clkout6_unused),
      // Input clock control
     .CLKFBIN             (clkfbout_buf),
     .CLKIN1              (clkin1),
@@ -116,8 +143,15 @@ module pll
     .DO                  (do_unused),
     .DRDY                (drdy_unused),
     .DWE                 (1'b0),
+    // Ports for dynamic phase shift
+    .PSCLK               (1'b0),
+    .PSEN                (1'b0),
+    .PSINCDEC            (1'b0),
+    .PSDONE              (psdone_unused),
     // Other control and status signals
     .LOCKED              (LOCKED),
+    .CLKINSTOPPED        (clkinstopped_unused),
+    .CLKFBSTOPPED        (clkfbstopped_unused),
     .PWRDWN              (1'b0),
     .RST                 (RESET));
 

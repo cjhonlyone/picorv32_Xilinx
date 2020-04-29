@@ -1,4 +1,4 @@
-# A Picorv32 On Zynq
+# A Picorv32 On Virtex6
 
 ## How To Compile  
 
@@ -87,18 +87,11 @@ make firmware
 |  ISE    |      |      |
 | :----: | :----: | :----: |
 |  Number of BUFGs    |   2 out of 32      |   6%   |
-|  Number of DSP48E1s     |  4 out of 20    |    20%   |
-|  Number of RAMB36E1s   |  32 out of 140    |   22%    |
-| Number of Slices |1237 out of 13300|9%|
-| Number of Slice Registers  |2360 out of 106400|2%|
+|  Number of DSP48E1s     |  4 out of 288    |    1%   |
+|  Number of RAMB36E1s   |  32 out of 156    |   20%    |
+| Number of Slices |3,861 out of  46,560|8%|
+| Number of Slice Registers  |2,350 out of  93,120|2%|
 
-|  vivado    |      |      |
-| :----: | :----: | :----: |
-|  Number of BUFGs    |   2 out of 32      |   6%   |
-|  Number of DSP48E1s     |  4 out of 20    |    20%   |
-|  Number of RAMB36E1s   |  32 out of 140    |   22%    |
-| Number of Slices |0 out of 13300|0%|
-| Number of Slice Registers  |1294 out of 106400|1%|
 ## TODO
 - interrupt controller
 - flash controller

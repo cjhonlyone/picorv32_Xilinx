@@ -13,9 +13,7 @@ RAM_SIZE = 131072 #128*1024
 BLOCK_RAM_SIZE = 4096
 
 firmware: firmware.bin
-# 	python3 makehex.py $< $(RAM_SIZE) > $(addsuffix .hex,$@)
 	python3 makehex.py $< $(RAM_SIZE) $(BLOCK_RAM_SIZE) #> $(addsuffix _B0.hex,$@)
-# 	python3 makecoe.py $< 2048 > $(addsuffix .coe,$@)
 
 firmware.bin: firmware.elf firmware.elf.S
 	$(TOOLCHAIN_PREFIX)objcopy -O binary $< $@;
