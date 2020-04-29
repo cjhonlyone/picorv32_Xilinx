@@ -40,12 +40,13 @@
 	.global hard_remu
 	.global stats
 	.global enable_timer
+	.global main
 
 reset_vec:
 	// no more than 16 bytes here !
 	// picorv32_waitirq_insn(zero)
 	picorv32_maskirq_insn(zero, zero)
-	j led
+	j start
 
 
 /* Interrupt handler
@@ -375,6 +376,8 @@ start:
 	li a0, 0x20000000
 	li a1, 123456789
 	sw a1,0(a0)
+
+	jal ra,main
 
 nooop:
 	nop

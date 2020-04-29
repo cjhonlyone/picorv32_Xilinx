@@ -96,40 +96,7 @@ module top(
     (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b111)) ? mem_wstrb : 4'b0,
     mem_valid && !mem_addr[31]);
 
-//    initial begin
-//    $readmemh("../firmware/firmwareram00.hex", _ram_4k_32_0._bram0.mem);
-//    $readmemh("../firmware/firmwareram01.hex", _ram_4k_32_0._bram1.mem);
-//    $readmemh("../firmware/firmwareram02.hex", _ram_4k_32_0._bram2.mem);
-//    $readmemh("../firmware/firmwareram03.hex", _ram_4k_32_0._bram3.mem);
-//    $readmemh("../firmware/firmwareram04.hex", _ram_4k_32_1._bram0.mem);
-//    $readmemh("../firmware/firmwareram05.hex", _ram_4k_32_1._bram1.mem);
-//    $readmemh("../firmware/firmwareram06.hex", _ram_4k_32_1._bram2.mem);
-//    $readmemh("../firmware/firmwareram07.hex", _ram_4k_32_1._bram3.mem);
-//    $readmemh("../firmware/firmwareram08.hex", _ram_4k_32_2._bram0.mem);
-//    $readmemh("../firmware/firmwareram09.hex", _ram_4k_32_2._bram1.mem);
-//    $readmemh("../firmware/firmwareram10.hex", _ram_4k_32_2._bram2.mem);
-//    $readmemh("../firmware/firmwareram11.hex", _ram_4k_32_2._bram3.mem);
-//    $readmemh("../firmware/firmwareram12.hex", _ram_4k_32_3._bram0.mem);
-//    $readmemh("../firmware/firmwareram13.hex", _ram_4k_32_3._bram1.mem);
-//    $readmemh("../firmware/firmwareram14.hex", _ram_4k_32_3._bram2.mem);
-//    $readmemh("../firmware/firmwareram15.hex", _ram_4k_32_3._bram3.mem);
-//    $readmemh("../firmware/firmwareram16.hex", _ram_4k_32_4._bram0.mem);
-//    $readmemh("../firmware/firmwareram17.hex", _ram_4k_32_4._bram1.mem);
-//    $readmemh("../firmware/firmwareram18.hex", _ram_4k_32_4._bram2.mem);
-//    $readmemh("../firmware/firmwareram19.hex", _ram_4k_32_4._bram3.mem);
-//    $readmemh("../firmware/firmwareram20.hex", _ram_4k_32_5._bram0.mem);
-//    $readmemh("../firmware/firmwareram21.hex", _ram_4k_32_5._bram1.mem);
-//    $readmemh("../firmware/firmwareram22.hex", _ram_4k_32_5._bram2.mem);
-//    $readmemh("../firmware/firmwareram23.hex", _ram_4k_32_5._bram3.mem);
-//    $readmemh("../firmware/firmwareram24.hex", _ram_4k_32_6._bram0.mem);
-//    $readmemh("../firmware/firmwareram25.hex", _ram_4k_32_6._bram1.mem);
-//    $readmemh("../firmware/firmwareram26.hex", _ram_4k_32_6._bram2.mem);
-//    $readmemh("../firmware/firmwareram27.hex", _ram_4k_32_6._bram3.mem);
-//    $readmemh("../firmware/firmwareram28.hex", _ram_4k_32_7._bram0.mem);
-//    $readmemh("../firmware/firmwareram29.hex", _ram_4k_32_7._bram1.mem);
-//    $readmemh("../firmware/firmwareram30.hex", _ram_4k_32_7._bram2.mem);
-//    $readmemh("../firmware/firmwareram31.hex", _ram_4k_32_7._bram3.mem);
-//    end		
+
   io _io(clk, reset, io_valid, mem_addr[4:2], mem_wdata, mem_wstrb[0], io_rdata, led[2:0], SEG_o, COM_o, rxd, txd);
 
   assign mem_rdata = mem_addr1[31] ? io_rdata : 
@@ -367,13 +334,14 @@ module bram_4k_8(
   assign dout = mem[addr1];
 
 endmodule
+
 module uart_baud_clock_16x(
   input clk,
   output baudclk16
 );
 
-  reg [8:0] c;
-  wire m = (c==9'd325);    // 50000000/(16*9600) ~= 326
+  reg [9:0] c;
+  wire m = (c==10'd326);    // 125000000/(16*9600) ~= 814
 
   always @(posedge clk)
     c <= m ? 0 : c+1;

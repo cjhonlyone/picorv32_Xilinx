@@ -6,9 +6,9 @@ else
 	TOOLCHAIN_PREFIX = /cygdrive/d/SysGCC/risc-v/bin/riscv64-unknown-elf-
 endif
 
-CCFLAGS = -march=rv32im -mabi=ilp32
+CCFLAGS = -march=rv32im -mabi=ilp32 -Wall
 TEST_OBJS = $(addsuffix .o,$(basename $(wildcard tests/*.S)))
-FIRMWARE_OBJS = start.o multest.o stats.o sieve.o irq.o print.o hello.o #main.o util.o 
+FIRMWARE_OBJS = start.o multest.o stats.o sieve.o irq.o print.o hello.o main.o util.o 
 RAM_SIZE = 131072 #128*1024
 BLOCK_RAM_SIZE = 4096
 

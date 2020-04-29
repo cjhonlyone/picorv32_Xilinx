@@ -19,3 +19,5 @@ hw_prog:
 hw_clean:
 	cd $(ISEPRJDIR) && $(MAKE) clean
 
+hw_sim:
+	

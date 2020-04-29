@@ -11,13 +11,15 @@ module chip(
 );
 	wire LOCKED;
 
+  wire CLK_OUT1;
+  wire CLK_OUT2;
   wire resetn;
-	dcm _pll(.CLK_IN1_P(FCLKIN_P),.CLK_IN1_N(FCLKIN_N),.
-    CLK_OUT1(CLK_OUT1), .RESET(1'b0), .LOCKED(LOCKED)); 
+	dcm _pll(.CLK_IN1_P(FCLKIN_P),.CLK_IN1_N(FCLKIN_N),
+    .CLK_OUT1(CLK_OUT1), .CLK_OUT2(CLK_OUT2),.RESET(1'b0), .LOCKED(LOCKED)); 
 	 
   reset_gen _reset_gen
     (
-    .clk(CLK_OUT1), 
+    .clk(CLK_OUT2), 
     .reset_async(FPGA_RESET & LOCKED), 
     .resetn(resetn)
     );
@@ -25,7 +27,7 @@ module chip(
   wire [1:0] led;
   top _top
     (
-      .clk       (CLK_OUT1),
+      .clk       (CLK_OUT2),
       .resetn    (resetn),
       .led       ({led, F_LED[1:0]}),
       .rxd       (1'b1),
@@ -61,6 +63,7 @@ module dcm
   input         CLK_IN1_N,
   // Clock out ports
   output        CLK_OUT1,
+  output        CLK_OUT2,
   // Status and control signals
   input         RESET,
   output        LOCKED
@@ -86,7 +89,6 @@ module dcm
   wire        clkfbout_buf;
   wire        clkfboutb_unused;
   wire        clkout0b_unused;
-  wire        clkout1_unused;
   wire        clkout1b_unused;
   wire        clkout2_unused;
   wire        clkout2b_unused;
@@ -112,6 +114,10 @@ module dcm
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKOUT0_USE_FINE_PS  ("FALSE"),
+    .CLKOUT1_DIVIDE       (20),
+    .CLKOUT1_PHASE        (0.000),
+    .CLKOUT1_DUTY_CYCLE   (0.500),
+    .CLKOUT1_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (8.000),
     .REF_JITTER1          (0.010))
   mmcm_adv_inst
@@ -120,7 +126,7 @@ module dcm
     .CLKFBOUTB           (clkfboutb_unused),
     .CLKOUT0             (clkout0),
     .CLKOUT0B            (clkout0b_unused),
-    .CLKOUT1             (clkout1_unused),
+    .CLKOUT1             (clkout1),
     .CLKOUT1B            (clkout1b_unused),
     .CLKOUT2             (clkout2_unused),
     .CLKOUT2B            (clkout2b_unused),
@@ -164,6 +170,11 @@ module dcm
   BUFG clkout1_buf
    (.O   (CLK_OUT1),
     .I   (clkout0));
+
+
+  BUFG clkout2_buf
+   (.O   (CLK_OUT2),
+    .I   (clkout1));
 
 
 
