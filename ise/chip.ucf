@@ -11,8 +11,8 @@ NET "SEG_o[7]" LOC = P23;
 
 NET "COM_o[0]" LOC = P26;
 NET "COM_o[1]" LOC = P27;
-#NET "switches_i[0]" LOC = P32;
-#NET "switches_i[1]" LOC = P33;
+NET "switches_i[0]" LOC = P32;
+NET "switches_i[1]" LOC = P33;
 
 
 NET "reset_async" LOC = P11 | PULLUP;

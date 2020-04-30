@@ -40,12 +40,13 @@
 	.global hard_remu
 	//.global stats
 	.global enable_timer
+	.global main
 
 reset_vec:
 	// no more than 16 bytes here !
 	// picorv32_waitirq_insn(zero)
 	picorv32_maskirq_insn(zero, zero)
-	j led
+	j start
 
 
 /* Interrupt handler
@@ -264,12 +265,17 @@ start:
 
 #ifdef ENABLE_HELLO
 	/* set stack pointer */
-	lui sp,(128*1024)>>12
+	lui sp,(8*1024)>>12
 
 	/* call hello C code */
 	jal ra,hello
 #endif
 	
+	/* set stack pointer */
+	lui sp,(8*1024)>>12
+
+	/* call hello C code */
+	jal ra,main
 
 	/* running tests from riscv-tests */
 

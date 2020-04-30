@@ -107,8 +107,9 @@ module io(
 
   wire led_write_strobe =        valid && (addr==3'd0) && wstrb;
   wire uart_tx_write_strobe =    valid && (addr==3'd1) && wstrb;
+  // reg uart_tx_write_strobe;
   wire uart_rx_read_strobe =     valid && (addr==3'd3) && !wstrb;
-
+  // reg uart_rx_read_strobe;
   wire lcd_write_strobe =        valid && (addr==3'd5) && wstrb;
   wire lcd_enable_strobe =        valid && (addr==3'd6) && wstrb;
 	
@@ -128,8 +129,24 @@ module io(
 
   uart_baud_clock_16x _uart_baud_clock_16x(clk, baudclk16);
 
+  reg [7:0] uart_tx_data;
   uart_tx _uart_tx(clk, reset, baudclk16, txd, wdata[7:0], uart_tx_ready, uart_tx_write_strobe);
+  // uart_tx _uart_tx(clk, reset, baudclk16, txd, uart_tx_data, uart_tx_ready, uart_tx_write_strobe);
   uart_rx _uart_rx(clk, reset, baudclk16, rxd, uart_rx_data, uart_rx_ready, uart_rx_read_strobe);
+
+  // always @(posedge clk) begin
+  //   uart_rx_read_strobe <= 1;
+  //   if (uart_rx_ready)begin
+  //     uart_tx_data <= uart_rx_data;
+  //     uart_tx_write_strobe <= 1;
+  //   end else begin
+  //     uart_tx_data <= 8'h41;
+  //     uart_tx_write_strobe <= 0;      
+  //   end
+  // end
+
+  // uart_tx _uart_tx0(clk, reset, baudclk16, txd_1, 8'h41, uart_tx_ready, uart_tx_write_strobe);
+  // uart_rx _uart_rx0(clk, reset, baudclk16, rxd_1, uart_rx_data, uart_rx_ready, uart_rx_read_strobe);
 
   always @(posedge clk) begin
     // led[6] <= uart_tx_ready;

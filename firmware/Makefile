@@ -8,7 +8,7 @@ endif
 
 CCFLAGS = -march=rv32im -mabi=ilp32
 TEST_OBJS = #$(addsuffix .o,$(basename $(wildcard tests/*.S)))
-FIRMWARE_OBJS = start.o irq.o print.o #multest.o stats.o sieve.o hello.o #main.o util.o 
+FIRMWARE_OBJS = start.o irq.o  main.o util.o #multest.o stats.o sieve.o hello.o #print.o
 RAM_SIZE = 8192 #128*1024
 BLOCK_RAM_SIZE = 2048
 

@@ -11,20 +11,25 @@ chip:
 #prog: data
 #	${ISE_DIR}/impact -batch impact.cmd
 
-test.elf:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/test.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+test:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/test.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/impact -batch impact.cmd
 
-firmware.elf:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;${ISE_DIR}/impact -batch impact.cmd
+firmware:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/impact -batch impact.cmd
 
+mcs:
+	${ISE_DIR}/impact -batch generate_mcs.cmd
+
+flash:
+	${ISE_DIR}/impact -batch prog_flash.cmd
 
 xdl:
 	${ISE_DIR}/xdl -ncd2xdl chip.ncd chip.xdl
 
 gui: 
 	${ISE_DIR}/xtclsh makegui.tcl
-
-
 
 clean:
 	rm -f *~
@@ -42,3 +47,4 @@ clean:
 	rm -f chip_bd.bmm
 	rm -f chip.xise chip.gise *.html *.log
 	rm -rf iseconfig
+	rm -rf *.cfi *.mcs *.prm *.sig
