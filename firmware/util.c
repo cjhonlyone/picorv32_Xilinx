@@ -61,11 +61,11 @@ void put_dec(unsigned int x)
     leading = leading || (n!=0);
     x -= i*n; } }
 
-// void print_chr(char ch){putc(ch);}
-// void print_str(const char *p){puts(p);}
-// void print_dec(unsigned int val){put_dec(val);}
-// void print_hex(unsigned int val, int digits)
-// {
-//     for (int i = (4*digits)-4; i >= 0; i -= 4)
-//         putc("0123456789ABCDEF"[(val >> i) % 16]);
-// }
+void print_chr(char ch){putc(ch);}
+void print_str(const char *p){puts(p);}
+void print_dec(unsigned int val){put_dec(val);}
+void print_hex(unsigned int val, int digits)
+{
+    for (int i = (4*digits)-4; i >= 0; i -= 4)
+        putc("0123456789ABCDEF"[(val >> i) % 16]);
+}

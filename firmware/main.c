@@ -32,7 +32,7 @@ int main()
 		for (j = 0;j<8000;j++) // 1600ms
 		delay(1000); // 400us
 
-		led(i);
+		led(1);
 		// *(volatile unsigned int*)0x80000000 = i;
 		i++;
 		// if (i == 100)
@@ -42,7 +42,7 @@ int main()
 		y = a*b;
 
 		print_dec(a);print_str(" * ");print_dec(b);print_str(" = ");print_dec(y);print_str("\n");
-		print_str("picorv32\n");
+		print_str("picorv32_v6\n");
 		// fa = 23.758;
 		// fb = 682.7713;
 		// fy = fa*fb;

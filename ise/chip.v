@@ -24,17 +24,17 @@ module chip(
     .resetn(resetn)
     );
 
-  wire [1:0] led;
+  wire [2:0] led;
   top _top
     (
       .clk       (CLK_OUT2),
       .resetn    (resetn),
-      .led       ({led, F_LED[1:0]}),
+      .led       ({led, F_LED[0]}),
       .rxd       (1'b1),
-      .txd       (F_LED[2])
+      .txd       (F_LED[1])
     );
-  assign F_LED[3] = 0;
-
+  assign F_LED[3] = F_LED[1];
+  assign F_LED[2] = ~F_LED[1];
 endmodule
 
 module reset_gen(
