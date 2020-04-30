@@ -19,22 +19,23 @@ module chip(
 	 
   reset_gen _reset_gen
     (
-    .clk(CLK_OUT2), 
+    .clk(CLK_OUT1), 
     .reset_async(FPGA_RESET & LOCKED), 
     .resetn(resetn)
     );
 
-  wire [2:0] led;
+  wire [1:0] led;
+  wire _tx;
   top _top
     (
-      .clk       (CLK_OUT2),
+      .clk       (CLK_OUT1),
       .resetn    (resetn),
-      .led       ({led, F_LED[0]}),
+      .led       ({led, F_LED[1:0]}),
       .rxd       (1'b1),
-      .txd       (F_LED[1])
+      .txd       (_tx)
     );
-  assign F_LED[3] = F_LED[1];
-  assign F_LED[2] = ~F_LED[1];
+  assign F_LED[3] = _tx;
+  assign F_LED[2] = 0;
 endmodule
 
 module reset_gen(

@@ -21,8 +21,8 @@
 // `default_nettype none
 // `define DEBUGNETS
 // `define DEBUGREGS
-// `define DEBUGASM
-// `define DEBUG
+//`define DEBUGASM
+//`define DEBUG
 
 `define XILINX_ISE_14_7
 
@@ -32,7 +32,7 @@
   `ifndef XILINX_ISE_14_7
     `define debug(debug_command)
   `else
-    `define debug(debug_command) $display("foo");
+    `define debug(debug_command) //debug_command
   `endif
 `endif
 
@@ -48,7 +48,7 @@
   `ifndef XILINX_ISE_14_7
     `define assert(assert_expr) empty_statement
   `else
-    `define assert(assert_expr) $display("foo")
+    `define assert(assert_expr) empty_statement
   `endif
 `endif
 
@@ -2575,8 +2575,8 @@ module four_stage_signed_35x35_multiply(
      output reg [69:0] P);
 
 // Pipeline state 0:  Perform all multiplies
-	wire [35:0] p0a, p2a, p3a;
-	wire [33:0] p1a;
+	wire [35:0] p0a, p2a, p3a, p1a;
+	//wire [33:0] p1a;
 	// MULT18X18S mul0 (.C(clock), .CE(1'b1), .R(1'b0), .P(p0a),
 	// .A(A[34:17]),
 	// .B(B[34:17]));
@@ -2588,19 +2588,19 @@ module four_stage_signed_35x35_multiply(
 	// .A({1'b0,A[16:0]}), .B(B[34:17]));
 	// MULT_MACRO: Multiply Function implemented in a DSP48E
 	// 7 Series
-	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst0 (
 	.A(A[34:17]), .B(B[34:17]),.P(p0a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst1 (
 	.A({1'b0,A[16:0]}), .B({1'b0,B[16:0]}),.P(p1a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst2 (
 	.A(A[34:17]), .B({1'b0, B[16:0]}),.P(p2a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("7SERIES"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst3 (
 	.A({1'b0,A[16:0]}), .B(B[34:17]),.P(p3a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
@@ -2611,7 +2611,7 @@ reg [35:0] p0b, p2b;
 reg [33:0] p1b;
 always @(posedge clock) begin
      p0b <= p0a;
-     p1b <= p1a;
+     p1b <= p1a[33:0];
      p2b <= p2a + p3a;
 end
 

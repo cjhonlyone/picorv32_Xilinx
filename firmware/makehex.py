@@ -13,9 +13,9 @@ binfile = argv[1]
 ramsize = int(argv[2])
 blockramsize = int(argv[3])
 
-#binfile = 'firmware.bin' #argv[1]
-#ramsize = 131072 #int(argv[2])
-#blockramsize = 4096 #int(argv[3])
+# binfile = 'firmware.bin' #argv[1]
+# ramsize = 131072 #int(argv[2])
+# blockramsize = 4096 #int(argv[3])
 
 ramnum = int(ramsize/blockramsize)
 ramidx = 0
@@ -35,8 +35,8 @@ ramidx = ramidx + 1
 f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
 
-blockramsize = blockramsize*4
-
+blockramsize = blockramsize
+ramsize = ramsize >> 2
 for i in range(ramsize):
     if i < len(bindata) // 4:
         w = bindata[4*i : 4*i+4]

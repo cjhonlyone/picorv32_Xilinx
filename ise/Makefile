@@ -33,12 +33,13 @@ clean:
 	rm -rf xlnx_auto_0_xdb *.ngd netlist.lst *.bld
 	rm -rf *.ngm *.pcf *.ncd *_usage.xml *_summary.xml *.mrp *.map
 	rm -rf par_usage_statistics.html *.ptwx *_pad.csv *.pad *_pad.txt *.unroutes *.xpi *.par
-	rm -rf *.drc *.cwbt *.bit *.bgn *.xwbt usage_statistics_webtalk.html webtalk.log
+	rm -rf *.drc *.cwbt *.bgn *.xwbt usage_statistics_webtalk.html webtalk.log
 	rm -rf *.prm *.mcs *.cfi
 	rm -rf _impact.cmd _impact.log _impactbatch.log
 	rm -rf impact_impact.xwbt impact.xsl webtalk_impact.xml
 	rm -f chip.edif ngc2edif.log
 	rm -f chip_map.twr chip_map.twx
-	rm -f chip_bd.bmm
 	rm -f chip.xise chip.gise *.html *.log
 	rm -rf iseconfig
+# 	rm -f chip_bd.bmm
+# 	rm -f *.bit

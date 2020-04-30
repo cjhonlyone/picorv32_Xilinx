@@ -45,6 +45,7 @@ tests/%.o: tests/%.S tests/riscv_test.h tests/test_macros.h
 	$(TOOLCHAIN_PREFIX)gcc -c $(CCFLAGS) -o $@ -DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' -DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<
 clean:
-	rm -f *.elf *.hex *.coe *.bin *.elf.S
+	rm -f  *.hex *.coe *.bin *.elf.S
 	rm -vrf $(FIRMWARE_OBJS) $(TEST_OBJS)
 	rm -f *.o
+# 	rm -f *.elf
