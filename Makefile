@@ -46,5 +46,5 @@ ise/tb_chip.vvp: $(isedir_FILES) $(glbl) $(rtldir_FILES)
 	chmod -x $@
 
 hw_sim_clean:
-	rm -rf testbench.vcd testbench.gtkw
+	rm -rf testbench.vcd #testbench.gtkw
 	rm -rf ise/tb_chip.vvp

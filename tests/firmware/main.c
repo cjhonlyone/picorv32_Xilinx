@@ -1,5 +1,12 @@
-#include "mylib.h"
-
+#include "util.h"
+//#include <stdint.h>
+//#include <stdbool.h>
+#define uint32_t unsigned int
+#define uint16_t unsigned short
+#define uint8_t unsigned char
+#define sint32_t signed int
+#define sint16_t signed short
+#define sint8_t signed char
 //BCD码转为二进制 
 unsigned bcd2bin(unsigned char val)
 {
@@ -12,43 +19,39 @@ unsigned char bin2bcd(unsigned val)
 	return ((val / 10) << 4) + val % 10;
 }
 
-void delay(int m)
-{ int i;
-  for (i=0; i<m; i++) {
-    asm volatile("nop"); } }
-    
 int main()
 { 
 	int i=0;
 	int j=0;
 	//   char c;
-	// unsigned int a,b,y;
-	float fa,fb,fy;
-	fa = 23.758;
-	fb = 682.7713;
-	fy = fa*fb;
-	// a = 12;
-	// b = 2;
+	unsigned int a,b,y;
+	a = 12;
+	b = 2;
 	while(1)
 	{
-		// for (j = 0;j<8000;j++) // 1600ms
-		// 	delay(1000); // 400us
+		for (j = 0;j<8000;j++) // 1600ms
+		delay(1000); // 400us
 
-		//led(1);
-		*(volatile unsigned int*)0x80000000 = 10;
-		// i++;
-		// y = a*b;
-		// printf("%d * %d = %d\n", a,b,y);
-		// printf("picorv32_v6\n");
-		fa = 23.758;
-		fb = 682.7713;
-		fy = fa*fb;
-		printf("%.6f * %.6f=%.6f\n",fa,fb,fy);
-		// a ++;b++;
-		// if (a == 20)
-		// {
-		// 	a =0;b=1;
-		// }
+		led(1);
+		// *(volatile unsigned int*)0x80000000 = i;
+		i++;
+		// if (i == 100)
+		// i = 0;
+		// *(volatile unsigned int*)0x80000018 = 1;
+		// *(volatile unsigned int*)0x80000014 = bin2bcd(i);
+		y = a*b;
+
+		print_dec(a);print_str(" * ");print_dec(b);print_str(" = ");print_dec(y);print_str("\n");
+		print_str("picorv32_v6\n");
+		// fa = 23.758;
+		// fb = 682.7713;
+		// fy = fa*fb;
+		// puts("(int)(23.758 * 682.7713) = "); put_dec(fy); putc('\n');
+		a ++;b++;
+		if (a == 20)
+		{
+			a =0;b=1;
+		}
 	}
 	return 0; 
 

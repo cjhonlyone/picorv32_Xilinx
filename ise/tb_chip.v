@@ -36,6 +36,7 @@ module testbench;
 
    wire FCLKIN_P;
    wire FCLKIN_N;
+   wire [3:0] F_LED;
 
    OBUFDS #(
        .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
@@ -50,7 +51,8 @@ module testbench;
 	chip uut (
       .FCLKIN_P(FCLKIN_P),
       .FCLKIN_N(FCLKIN_N),
-		.FPGA_RESET(reset_async)
+		.FPGA_RESET(reset_async),
+      .F_LED(F_LED)
 	);
 	
    glbl glbl();
@@ -64,12 +66,44 @@ module testbench;
       repeat (2) @(posedge clk);
       reset_async = 1;
 
-      repeat (100) @(posedge clk);
+      repeat (100000) @(posedge clk);
 
       $finish;
    end
-		
-	reg [7:0] cnt = 0;
+
+   wire ser_rx = 0;
+   wire ser_tx = F_LED[3];
+
+   localparam ser_half_period = 50;
+   event ser_sample;
+   reg [7:0] buffer;
+
+   always begin
+      @(negedge ser_tx);
+
+      repeat (ser_half_period) @(posedge clk);
+      -> ser_sample; // start bit
+
+      repeat (8) begin
+         repeat (ser_half_period) @(posedge clk);
+         repeat (ser_half_period) @(posedge clk);
+         buffer = {ser_tx, buffer[7:1]};
+         -> ser_sample; // data bit
+      end
+
+      repeat (ser_half_period) @(posedge clk);
+      repeat (ser_half_period) @(posedge clk);
+      -> ser_sample; // stop bit
+
+      if (buffer < 32 || buffer >= 127)
+         if (buffer == 10)
+            $display(" ");
+         else begin
+            $display("Serial data: %d", buffer);
+         end
+      else
+         $write("%c", buffer);
+   end
 
    initial begin
       $readmemh("firmware/firmwareram00.hex", uut._top._ram_4k_32_0._bram0.mem);
@@ -105,6 +139,7 @@ module testbench;
       $readmemh("firmware/firmwareram30.hex", uut._top._ram_4k_32_7._bram2.mem);
       $readmemh("firmware/firmwareram31.hex", uut._top._ram_4k_32_7._bram3.mem);
    end	
+
 
 endmodule
 

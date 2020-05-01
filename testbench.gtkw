@@ -1,0 +1,69 @@
+[*]
+[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
+[*] Fri May 01 14:55:34 2020
+[*]
+[dumpfile] "D:\work\CPU\RISCV\mygit\picorv32-Xilinx\testbench.vcd"
+[dumpfile_mtime] "Fri May 01 17:21:04 2020"
+[dumpfile_size] 44021488
+[savefile] "D:\work\CPU\RISCV\mygit\picorv32-Xilinx\testbench.gtkw"
+[timestart] 13801700
+[size] 1440 837
+[pos] 2551 -9
+*-15.000000 13890300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] testbench.
+[treeopen] testbench.uut.
+[sst_width] 211
+[signals_width] 174
+[sst_expanded] 1
+[sst_vpaned_height] 237
+@22
+testbench.uut._top.uart.cfg_divider[31:0]
+@28
+testbench.uut._top.uart.clk
+@22
+testbench.uut._top.uart.recv_buf_data[7:0]
+@28
+testbench.uut._top.uart.recv_buf_valid
+@22
+testbench.uut._top.uart.recv_divcnt[31:0]
+testbench.uut._top.uart.recv_pattern[7:0]
+testbench.uut._top.uart.recv_state[3:0]
+testbench.uut._top.uart.reg_dat_di[31:0]
+testbench.uut._top.uart.reg_dat_do[31:0]
+@28
+testbench.uut._top.uart.reg_dat_re
+testbench.uut._top.uart.reg_dat_wait
+testbench.uut._top.uart.reg_dat_we
+@22
+testbench.uut._top.uart.reg_div_di[31:0]
+testbench.uut._top.uart.reg_div_do[31:0]
+testbench.uut._top.uart.reg_div_we[3:0]
+@28
+testbench.uut._top.uart.resetn
+@22
+testbench.uut._top.uart.send_bitcnt[3:0]
+testbench.uut._top.uart.send_divcnt[31:0]
+@28
+testbench.uut._top.uart.send_dummy
+@22
+testbench.uut._top.uart.send_pattern[9:0]
+@28
+testbench.uut._top.uart.ser_rx
+testbench.uut._top.uart.ser_tx
+@22
+testbench.uut._top.mem_addr[31:0]
+@28
+testbench.uut._top.mem_instr
+@22
+testbench.uut._top.mem_rdata[31:0]
+@28
+testbench.uut._top.mem_valid
+testbench.uut._top.mem_ready
+@820
+testbench.uut._top.mem_wdata[31:0]
+@22
+testbench.uut._top.mem_wstrb[3:0]
+@28
+testbench.uut._top.led_ready
+[pattern_trace] 1
+[pattern_trace] 0

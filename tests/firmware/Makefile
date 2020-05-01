@@ -7,8 +7,8 @@ else
 endif
 
 CCFLAGS = -march=rv32im -mabi=ilp32 -Wall
-FIRMWARE_OBJS = start.o irq.o main.o
-MYLIBS_OBJS = mylib.o
+TEST_OBJS = $(addsuffix .o,$(basename $(wildcard tests/*.S)))
+FIRMWARE_OBJS = start.o multest.o stats.o sieve.o irq.o main.o util.o #print.o hello.o
 RAM_SIZE = 131072 #128*1024
 BLOCK_RAM_SIZE = 4096
 
@@ -23,10 +23,15 @@ firmware.bin: firmware.elf firmware.elf.S
 firmware.elf.S: firmware.elf
 	$(TOOLCHAIN_PREFIX)objdump $< -S > $@
 
-firmware.elf: $(FIRMWARE_OBJS) $(MYLIBS_OBJS) sections.lds
+#firmware.elf: sections.lds start.o test.c util.c
+#	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -nostdinc -fno-builtin -c util.c
+#	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -nostdinc -fno-builtin -c test.c
+#	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -ffreestanding -nostdlib -Wl,-Bstatic,-T,support/sections.lds support/start.o test.o util.o -lgcc -o test.elf 
+
+firmware.elf: $(FIRMWARE_OBJS) $(TEST_OBJS) sections.lds
 	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -Os -ffreestanding -nostdlib -o $@ \
 		-Wl,-Bstatic,-T,sections.lds\
-		$(FIRMWARE_OBJS) $(MYLIBS_OBJS) -lgcc
+		$(FIRMWARE_OBJS) $(TEST_OBJS) -lgcc
 	chmod -x $@
 
 start.o: start.S
@@ -35,6 +40,10 @@ start.o: start.S
 %.o: %.c
 	$(TOOLCHAIN_PREFIX)gcc -c $(CCFLAGS) -Os -ffreestanding -nostdlib -o $@ $<
 	
+#-fno-builtin -nostdinc
+tests/%.o: tests/%.S tests/riscv_test.h tests/test_macros.h
+	$(TOOLCHAIN_PREFIX)gcc -c $(CCFLAGS) -o $@ -DTEST_FUNC_NAME=$(notdir $(basename $<)) \
+		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' -DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<
 clean:
 	rm -f  *.hex *.coe *.bin *.elf.S
 	rm -vrf $(FIRMWARE_OBJS) $(TEST_OBJS)

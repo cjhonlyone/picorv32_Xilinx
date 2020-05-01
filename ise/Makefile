@@ -19,6 +19,9 @@ firmware:
 	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
+dhry:
+	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../dhrystone/dhry.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/impact -batch impact.cmd
 
 xdl:
 	${ISE_DIR}/xdl -ncd2xdl chip.ncd chip.xdl
