@@ -28,7 +28,7 @@ static void sprintf_putch(int ch, void** data);
 static unsigned long getuint(va_list *ap, int lflag);
 static long getint(va_list *ap, int lflag);
 static inline void printnum(void (*putch)(int, void**), void **putdat,
-                    unsigned long num, unsigned base, int width, int padc);
+                    unsigned long long num, unsigned base, int width, int padc);
 static inline void print_double(void (*putch)(int, void**), void **putdat,
                                 double num, int width, int prec);
 static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt, va_list ap);
@@ -36,7 +36,6 @@ extern int printf(const char* fmt, ...);
 extern int sprintf(char* str, const char* fmt, ...);
 
 extern char *malloc();
-// extern int printf(const char *format, ...);
 
 extern void *memcpy(void *dest, const void *src, long n);
 extern char *strcpy(char *dest, const char *src);

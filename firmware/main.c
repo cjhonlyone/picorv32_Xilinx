@@ -21,29 +21,51 @@ int main()
 { 
 	int i=0;
 	int j=0;
+	char char_va;
+	short  short_va;
+	int int_va;
+	long long_va;
+	long long longlong_va;
+	void*  void_va;
+	float  float_va;
+	double double_va;
+	long double longdouble_va;
+
+	printf("size of char : %d\n",sizeof(char_va));
+	printf("size of short  : %d\n",sizeof(short_va));
+	printf("size of int : %d\n",sizeof(int_va));
+	printf("size of long : %d\n",sizeof(long_va));
+	printf("size of long long  : %d\n",sizeof(longlong_va));
+	printf("size of void* : %d\n",sizeof(void_va));
+	printf("size of float  : %d\n",sizeof(float_va));
+	printf("size of double : %d\n",sizeof(double_va));
+	printf("size of long double : %d\n",sizeof(longdouble_va));
 	//   char c;
 	// unsigned int a,b,y;
 	float fa,fb,fy;
-	fa = 23.758;
+	fa = 5788.345;
 	fb = 682.7713;
 	fy = fa*fb;
+	printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
+	printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
 	// a = 12;
 	// b = 2;
 	while(1)
 	{
-		// for (j = 0;j<8000;j++) // 1600ms
-		// 	delay(1000); // 400us
+		for (j = 0;j<8000;j++) // 1600ms
+			delay(1000); // 400us
 
 		//led(1);
-		*(volatile unsigned int*)0x80000000 = 10;
+		// *(volatile unsigned int*)0x80000000 = 10;
 		// i++;
 		// y = a*b;
 		// printf("%d * %d = %d\n", a,b,y);
 		// printf("picorv32_v6\n");
-		fa = 23.758;
-		fb = 682.7713;
+		fa = fa +1;
+		fb = fb+1;
 		fy = fa*fb;
-		printf("%.6f * %.6f=%.6f\n",fa,fb,fy);
+		printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
+		printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
 		// a ++;b++;
 		// if (a == 20)
 		// {

@@ -104,7 +104,7 @@ module top(
     ram_ready <= ram_sel  && !ram_ready;
   end
 
-  simpleuart #(.DEFAULT_DIV(32'd100))
+  simpleuart #(.DEFAULT_DIV(32'd1085))
   uart (
     .clk         (clk         ),
     .resetn      (resetn      ),

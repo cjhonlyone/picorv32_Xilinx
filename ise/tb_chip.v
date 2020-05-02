@@ -74,7 +74,7 @@ module testbench;
    wire ser_rx = 0;
    wire ser_tx = F_LED[3];
 
-   localparam ser_half_period = 50;
+   localparam ser_half_period = 542;
    event ser_sample;
    reg [7:0] buffer;
 
@@ -142,4 +142,3 @@ module testbench;
 
 
 endmodule
-

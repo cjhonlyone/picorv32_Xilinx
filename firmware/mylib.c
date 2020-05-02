@@ -48,7 +48,7 @@ static long getint(va_list *ap, int lflag)
 }
 
 static inline void printnum(void (*putch)(int, void**), void **putdat,
-                    unsigned long num, unsigned base, int width, int padc)
+                    unsigned long long num, unsigned base, int width, int padc)
 {
   unsigned digs[sizeof(num)*8];
   int pos = 0;
@@ -86,7 +86,7 @@ static inline void print_double(void (*putch)(int, void**), void **putdat,
     u.d *= 10;
 
   char buf[32], *pbuf = buf;
-  printnum(sprintf_putch, (void**)&pbuf, (unsigned long)u.d, 10, 0, 0);
+  printnum(sprintf_putch, (void**)&pbuf, (unsigned long long)u.d, 10, 0, 0);
   if (prec > 0) {
     for (int i = 0; i < prec; i++) {
       pbuf[-i] = pbuf[-i-1];

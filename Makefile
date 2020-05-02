@@ -3,7 +3,6 @@
 MAKE = make
 FIRMWAREDIR = firmware
 ISEPRJDIR = ise
-
 # can not work
 # unisims_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/verilog/src/unisims
 
@@ -12,9 +11,9 @@ ISEPRJDIR = ise
 # unimacro_DIR=../../../../../Xilinx/14.7/ISE_DS/ISE/verilog/src/unimacro
 # glbl=../../../../../Xilinx/14.7/ISE_DS/ISE/verilog/src/glbl.v
 
-unisims_DIR=D:/Xilinx/14.7/ISE_DS/ISE/verilog/src/unisims
-unimacro_DIR=D:/Xilinx/14.7/ISE_DS/ISE/verilog/src/unimacro
-glbl=D:/Xilinx/14.7/ISE_DS/ISE/verilog/src/glbl.v
+unisims_DIR=../../ISE/verilog/src/unisims
+unimacro_DIR=../../ISE/verilog/src/unimacro
+glbl=../../ISE/verilog/src/glbl.v
 
 isedir_FILES = $(wildcard ise/*.v) 
 rtldir_FILES = $(wildcard rtl/*.v)
