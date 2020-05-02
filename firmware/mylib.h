@@ -25,8 +25,8 @@ int uart_rx_data();
 int putchar(int ch);
 size_t strnlen(const char *str, size_t maxsize);
 static void sprintf_putch(int ch, void** data);
-static unsigned long getuint(va_list *ap, int lflag);
-static long getint(va_list *ap, int lflag);
+static unsigned long long getuint(va_list *ap, int lflag);
+static long long getint(va_list *ap, int lflag);
 static inline void printnum(void (*putch)(int, void**), void **putdat,
                     unsigned long long num, unsigned base, int width, int padc);
 static inline void print_double(void (*putch)(int, void**), void **putdat,

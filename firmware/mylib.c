@@ -31,18 +31,18 @@ static void sprintf_putch(int ch, void** data)
   (*pstr)++;
 }
 
-static unsigned long getuint(va_list *ap, int lflag)
+static unsigned long long getuint(va_list *ap, int lflag)
 {
   if (lflag)
-    return va_arg(*ap, unsigned long);
+    return va_arg(*ap, unsigned long long);
   else
     return va_arg(*ap, unsigned int);
 }
 
-static long getint(va_list *ap, int lflag)
+static long long getint(va_list *ap, int lflag)
 {
   if (lflag)
-    return va_arg(*ap, long);
+    return va_arg(*ap, long long);
   else
     return va_arg(*ap, int);
 }
@@ -104,7 +104,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
   register const char* p;
   const char* last_fmt;
   register int ch, err;
-  unsigned long num;
+  unsigned long long num;
   int base, lflag, width, precision, altflag;
   char padc;
 
@@ -207,9 +207,9 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     // (signed) decimal
     case 'd':
       num = getint(&ap, lflag);
-      if ((long) num < 0) {
+      if ((long long) num < 0) {
         putch('-', putdat);
-        num = -(long) num;
+        num = -(long long) num;
       }
       base = 10;
       goto signed_number;
