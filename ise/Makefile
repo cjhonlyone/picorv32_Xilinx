@@ -3,7 +3,7 @@ ISE_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/bin/nt64
 
 chip:
 	${ISE_DIR}/xst -ifn chip.xst
-	${ISE_DIR}/ngdbuild -p ${DEVICE} -bm chip.bmm -uc chip.ucf chip.ngc chip.ngd
+	${ISE_DIR}/ngdbuild -p ${DEVICE} -bm ../rtl/chip.bmm -uc ../rtl/chip.ucf chip.ngc chip.ngd
 	${ISE_DIR}/map -w -timing -detail -p ${DEVICE} -o chip_map.ncd chip.ngd chip.pcf
 	${ISE_DIR}/par -w chip_map.ncd chip.ncd chip.pcf
 	${ISE_DIR}/bitgen -w chip.ncd chip.bit chip.pcf
@@ -12,15 +12,15 @@ chip:
 #	${ISE_DIR}/impact -batch impact.cmd
 
 test:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
 firmware:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
 dhry:
-	${ISE_DIR}/data2mem -bm chip_bd.bmm -bd ../dhrystone/dhry.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../dhrystone/dhry.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
 xdl:

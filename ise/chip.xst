@@ -1,5 +1,5 @@
 run
--ifn chip.v
+-ifn ../rtl/chip.v
 -ofn chip.ngc
 -ifmt Verilog
 -top chip

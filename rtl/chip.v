@@ -182,6 +182,6 @@ module dcm
 
 endmodule
 
-`include "../rtl/top.v"
-`include "../rtl/picorv32.v"
-`include "../rtl/simpleuart.v"
+`include "top.v"
+`include "picorv32.v"
+`include "simpleuart.v"

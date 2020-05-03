@@ -40,14 +40,45 @@ int main()
 	printf("size of float  : %d\n",sizeof(float_va));
 	printf("size of double : %d\n",sizeof(double_va));
 	printf("size of long double : %d\n",sizeof(longdouble_va));
+
+	int_va = 0x11223344;
+
+	printf("int_va = %08x\n",int_va);
+	printf("&int_va = %08x\n",&int_va);
+	printf("*%08x = %02x\n",(((char *)(&int_va))+0),*(((char *)(&int_va))+0));
+	printf("*%08x = %02x\n",(((char *)(&int_va))+1),*(((char *)(&int_va))+1));
+	printf("*%08x = %02x\n",(((char *)(&int_va))+2),*(((char *)(&int_va))+2));
+	printf("*%08x = %02x\n",(((char *)(&int_va))+3),*(((char *)(&int_va))+3));
+	if ((*(char *)&int_va) == 0x11)
+		printf("Big Endian\n");
+	else if ((*(char *)&int_va) == 0x44)
+		printf("Small Endian\n");
+
+	/*size of char : 1
+	size of short  : 2
+	size of int : 4
+	size of long : 4
+	size of long long  : 8
+	size of void* : 4
+	size of float  : 4
+	size of double : 8
+	size of long double : 16
+	int_va = 11223344
+	&int_va = 0001ffec
+	*0001ffec = 44
+	*0001ffed = 33
+	*0001ffee = 22
+	*0001ffef = 11
+	Small Endian*/
+
 	//   char c;
 	// unsigned int a,b,y;
-	float fa,fb,fy;
-	fa = 5788.345;
-	fb = 682.7713;
-	fy = fa*fb;
-	printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
-	printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
+	// float fa,fb,fy;
+	// fa = 5788.345;
+	// fb = 682.7713;
+	// fy = fa*fb;
+	// printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
+	// printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
 	// a = 12;
 	// b = 2;
 	while(1)
@@ -56,16 +87,16 @@ int main()
 			delay(1000); // 400us
 
 		//led(1);
-		// *(volatile unsigned int*)0x80000000 = 10;
-		// i++;
+		*(volatile unsigned int*)0x80000000 = i;
+		i++;
 		// y = a*b;
-		// printf("%d * %d = %d\n", a,b,y);
-		// printf("picorv32_v6\n");
-		fa = fa +1;
-		fb = fb+1;
-		fy = fa*fb;
-		printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
-		printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
+		// printf("xxxxxxxxxxxxxx\n");
+		printf("picorv32_v6\n");
+		// fa = fa +1;
+		// fb = fb+1;
+		// fy = fa*fb;
+		// printf("%.6f * %.6f = %.6f\n",fa,fb,fy);
+		// printf("%08x * %08x = %08x\n", *(uint32_t*)(&fa),*(uint32_t*)(&fb),*(uint32_t*)(&fy));
 		// a ++;b++;
 		// if (a == 20)
 		// {
