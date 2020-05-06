@@ -18,14 +18,15 @@ firmware: firmware.bin
 firmware.bin: firmware.elf firmware.elf.S
 	$(TOOLCHAIN_PREFIX)objcopy -O binary $< $@;
 	wc -c firmware.bin
+	size firmware.elf
 	chmod -x $@
 
 firmware.elf.S: firmware.elf
-	$(TOOLCHAIN_PREFIX)objdump $< -S > $@
+	$(TOOLCHAIN_PREFIX)objdump $< -s -d > $@
 
 firmware.elf: $(FIRMWARE_OBJS) $(MYLIBS_OBJS) sections.lds
 	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -Os -ffreestanding -nostdlib -o $@ \
-		-Wl,-Bstatic,-T,sections.lds\
+		-Wl,-Bstatic,-T,sections.lds \
 		$(FIRMWARE_OBJS) $(MYLIBS_OBJS) -lgcc
 	chmod -x $@
 

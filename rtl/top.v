@@ -292,3 +292,33 @@ module bram_4k_8(
   assign dout = mem[addr1];
 
 endmodule
+
+module dbram_4k_8 (clka,clkb,ena,enb,wea,web,addra,addrb,dia,dib,doa,dob);
+
+    input  clka,clkb,ena,enb,wea,web;
+    input  [5:0] addra,addrb;
+    input  [7:0] dia,dib;
+    output [7:0] doa,dob;
+    reg    [7:0] ram [4095:0];
+    reg    [7:0] doa,dob;
+
+     
+    always @(posedge clka) begin
+        if (ena)    
+        begin
+            if (wea)
+                ram[addra] <= dia;
+            doa <= ram[addra];
+        end
+    end
+
+    always @(posedge clkb) begin
+        if (enb)
+        begin
+            if (web)
+                ram[addrb] <= dib;
+            dob <= ram[addrb];
+        end
+    end
+
+endmodule

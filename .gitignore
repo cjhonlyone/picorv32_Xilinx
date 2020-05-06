@@ -6,3 +6,5 @@
 /lwip/
 /xapp1144/
 /emac/
+*.gtkw
+*.vcd

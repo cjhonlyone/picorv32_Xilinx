@@ -20,7 +20,7 @@
 
 #include "custom_ops.S"
 
-	.section .text
+.section .text
 	.global irq
 	.global stats
 	.global enable_timer
