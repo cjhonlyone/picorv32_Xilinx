@@ -30,7 +30,7 @@ SECTIONS {
         . = ALIGN(4);
     } 
 
-    . = 0x4000;
+    . = 0x4000; /* 16KB */
     /* This is the initialized data section */
     .data :
     {
@@ -53,10 +53,4 @@ SECTIONS {
         /* *(COMMON)  what fuck this is */
         . = ALIGN(4);
     }
-
-    /* this is to define the start of the heap, and make sure we have a minimum size */
-    .heap :
-    {
-        . = ALIGN(4);
-    } 
 }

@@ -31,6 +31,14 @@ int main()
 	static int g;
 	static int h = 0x55;
 
+	// char * p;
+	// p = malloc(32);
+
+	// *(int*)p = 0x22334455;
+
+	// p = malloc(32);
+
+	// *(int*)p = 0x88888888;
 
 	char char_va;
 	short  short_va;

@@ -1,13 +1,23 @@
 module chip(
-  input FCLKIN_P,
-  input FCLKIN_N,
-  input FPGA_RESET,
-  output [3:0] F_LED
-  // output [7:0] SEG_o,
-  // output [1:0] COM_o,
-  // input [1:0] buttons_i,
-  // input rs232_dce_rxd,
-  // output rs232_dce_txd
+  // input [31:0] test,
+  input        FCLKIN_P,
+  input        FCLKIN_N,
+  input        FPGA_RESET,
+  output [3:0] F_LED,
+
+  output       PHY_RESET,
+  // output       PHY_INT,
+
+  output       PHY_TXC_GTXCLK,
+  output       PHY_TXCLK,
+  output [7:0] PHY_TXD,
+  output       PHY_TXCTL_TXEN,
+  output       PHY_TXER,
+
+  input  [7:0] PHY_RXD,
+  input        PHY_RXCTL_RXDV,
+  input        PHY_RXER,
+  input        PHY_RXCLK
 );
 	wire LOCKED;
 
@@ -28,12 +38,27 @@ module chip(
   wire _tx;
   top _top
     (
-      .clk       (CLK_OUT1),
-      .resetn    (resetn),
-      .led       ({led, F_LED[1:0]}),
-      .rxd       (1'b1),
-      .txd       (_tx)
+      // .test        (test),
+      .clk         (CLK_OUT1),
+      .resetn      (resetn),
+      .led         ({led, F_LED[1:0]}),
+      .rxd         (1'b1),
+      .txd         (_tx),
+
+      .phy_rx_clk  (PHY_RXCLK),
+      .phy_rxd     (PHY_RXD),
+      .phy_rx_dv   (PHY_RXCTL_RXDV),
+      .phy_rx_er   (PHY_RXER),
+
+      .phy_gtx_clk (PHY_TXC_GTXCLK),
+      .phy_tx_clk  (PHY_TXCLK),
+      .phy_txd     (PHY_TXD),
+      .phy_tx_en   (PHY_TXCTL_TXEN),
+      .phy_tx_er   (PHY_TXER),
+
+      .phy_reset_n (PHY_RESET)
     );
+
   assign F_LED[3] = _tx;
   assign F_LED[2] = 0;
 endmodule
@@ -185,3 +210,18 @@ endmodule
 `include "top.v"
 `include "picorv32.v"
 `include "simpleuart.v"
+`include "DMAC.v"
+
+`include "./eth/axis_adapter.v"
+`include "./eth/axis_async_fifo.v"
+`include "./eth/axis_async_fifo_adapter.v"
+`include "./eth/axis_gmii_rx.v"
+`include "./eth/axis_gmii_tx.v"
+`include "./eth/eth_mac_1g.v"
+`include "./eth/eth_mac_1g_gmii.v"
+`include "./eth/eth_mac_1g_gmii_fifo.v"
+`include "./eth/gmii_phy_if.v"
+`include "./eth/lfsr.v"
+`include "./eth/oddr.v"
+`include "./eth/ssio_sdr_in.v"
+`include "./eth/ssio_sdr_out.v"

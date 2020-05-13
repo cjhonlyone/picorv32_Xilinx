@@ -64,3 +64,8 @@ for i in range(ramsize):
             ramidx = ramidx + 1
             f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
+
+f0 = open('firmwarezero.hex', 'w')
+for i in range(4096):
+    f0.write("00\n")
+f0.close()

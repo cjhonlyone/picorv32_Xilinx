@@ -1,9 +1,23 @@
+`timescale 1 ns / 1 ps
 module top(
-  input clk,
-  input resetn,
-  output [3:0] led,
-  input rxd,
-  output txd
+    // input [31:0] test,
+
+    input        clk,
+    input        resetn,
+    output [3:0] led,
+    input        rxd,
+    output       txd,
+
+    input        phy_rx_clk,
+    input  [7:0] phy_rxd,
+    input        phy_rx_dv,
+    input        phy_rx_er,
+    output       phy_gtx_clk,
+    input        phy_tx_clk,
+    output [7:0] phy_txd,
+    output       phy_tx_en,
+    output       phy_tx_er,
+    output       phy_reset_n
 );
 
   wire trap;
@@ -37,44 +51,82 @@ module top(
     .irq(irq)
   );
   
+  wire rx_DMA_int;
   always @(posedge clk) begin
     irq <= 0;
     irq[4] <= 0;//buttons_i[0];
-    irq[5] <= 0;//buttons_i[1];
+    irq[5] <= rx_DMA_int;//buttons_i[1];
   end
 
-  wire        ram_sel = mem_valid && (mem_addr < 32'h 0002_0000);
-  wire        ram_rady;
-  wire [31:0] ram_rdata;
+  wire        text_valid = mem_valid && (mem_addr < 32'h 0001_0000);
+  wire        text_ready;
+  wire [31:0] text_rdata;
 
-  wire        io_sel = mem_valid && (mem_addr == 32'h 8000_0000);
-  wire        io_rady;
+  wire        heap_valid = mem_valid && (mem_addr > 32'h 0000_FFFF) && (mem_addr < 32'h 0002_0000);
+  wire        heap_ready;
+  wire [31:0] heap_rdata;
+
+  wire        io_valid = mem_valid && (mem_addr == 32'h 8000_0000);
+  wire        io_ready;
   wire [31:0] io_rdata;
-   
-  wire        simpleuart_reg_div_sel = mem_valid && (mem_addr == 32'h 8000_0004);
-  wire [31:0] simpleuart_reg_div_do;
+
+  wire        DMA_valid = mem_valid && (mem_addr >= 32'h 8000_0040) && (mem_addr < 32'h 8000_00D0);
+  wire        DMA_ready;
+  wire [31:0] DMA_rdata;
+  // wire        simpleuart_reg_div_sel = mem_valid && (mem_addr == 32'h 8000_0004);
+  // wire [31:0] simpleuart_reg_div_do;
 
   wire        simpleuart_reg_dat_sel = mem_valid && (mem_addr == 32'h 8000_0008);
   wire [31:0] simpleuart_reg_dat_do;
   wire        simpleuart_reg_dat_wait;
 
-  RAM _RAM
+
+  wire        mux_heap_valid;
+  wire [31:0] mux_heap_addr;
+  wire [31:0] mux_heap_wdata;
+  wire [ 3:0] mux_heap_wstrb;
+  wire        mux_heap_ready;
+  wire [31:0] mux_heap_rdata;
+
+  wire        DMA_heap_valid;
+  wire [31:0] DMA_heap_addr;
+  wire [31:0] DMA_heap_wdata;
+  wire [ 3:0] DMA_heap_wstrb;
+  wire        DMA_heap_ready;
+  wire [31:0] DMA_heap_rdata;
+  
+  wire        BUS_valid;
+  wire        BUS_ready;
+
+  RAM_64KB _text_RAM
     (
       .clk       (clk),
       .resetn    (resetn),
-      .mem_valid (ram_sel),
-      .mem_ready (ram_ready),
+      .mem_valid (text_valid),
+      .mem_ready (text_ready),
       .mem_addr  (mem_addr),
       .mem_wdata (mem_wdata),
       .mem_wstrb (mem_wstrb),
-      .mem_rdata (ram_rdata)
+      .mem_rdata (text_rdata)
+    );
+
+  RAM_64KB _heap_RAM
+    (
+      .clk       (clk),
+      .resetn    (resetn),
+      .mem_valid (mux_heap_valid),
+      .mem_ready (mux_heap_ready),
+      .mem_addr  (mux_heap_addr),
+      .mem_wdata (mux_heap_wdata),
+      .mem_wstrb (mux_heap_wstrb),
+      .mem_rdata (mux_heap_rdata)
     );
 
   IO _IO
     (
       .clk       (clk),
       .resetn    (resetn),
-      .mem_valid (io_sel),
+      .mem_valid (io_valid),
       .mem_ready (io_ready),
       .mem_addr  (mem_addr),
       .mem_wdata (mem_wdata),
@@ -83,11 +135,140 @@ module top(
       .io        (led)
     );
 
+   mux_heap _mux_heap
+      (
+         .clk            (clk),
+         .resetn         (resetn),
+         .mux_heap_valid (mux_heap_valid),
+         .mux_heap_ready (mux_heap_ready),
+         .mux_heap_addr  (mux_heap_addr),
+         .mux_heap_wdata (mux_heap_wdata),
+         .mux_heap_wstrb (mux_heap_wstrb),
+         .mux_heap_rdata (mux_heap_rdata),
+         .BUS_valid      (BUS_valid),
+         .BUS_ready      (BUS_ready),
+         .DMA_heap_valid (DMA_heap_valid),
+         .DMA_heap_ready (DMA_heap_ready),
+         .DMA_heap_addr  (DMA_heap_addr),
+         .DMA_heap_wdata (DMA_heap_wdata),
+         .DMA_heap_wstrb (DMA_heap_wstrb),
+         .DMA_heap_rdata (DMA_heap_rdata),
+         .CPU_heap_valid (heap_valid),
+         .CPU_heap_ready (heap_ready),
+         .CPU_heap_addr  (mem_addr),
+         .CPU_heap_wdata (mem_wdata),
+         .CPU_heap_wstrb (mem_wstrb),
+         .CPU_heap_rdata (heap_rdata)
+      );
+
+    // AXI between MAC and Ethernet modules
+    wire [31:0] rx_axis_tdata;
+    wire rx_axis_tvalid;
+    wire rx_axis_tready;
+    wire [ 3:0] rx_axis_tkeep;
+    wire rx_axis_tlast;
+    wire rx_axis_tuser;
+
+    wire [31:0] tx_axis_tdata;
+    wire tx_axis_tvalid;
+    wire tx_axis_tready;
+    wire [ 3:0] tx_axis_tkeep;
+    wire tx_axis_tlast;
+    wire tx_axis_tuser;
+
+   DMAC _DMAC
+      (
+         .clk            (clk),
+         .resetn         (resetn),
+         .mem_valid      (DMA_valid),
+         .mem_ready      (DMA_ready),
+         .mem_addr       (mem_addr),
+         .mem_wdata      (mem_wdata),
+         .mem_wstrb      (mem_wstrb),
+         .mem_rdata      (DMA_rdata),
+         .BUS_valid      (BUS_valid),
+         .BUS_ready      (BUS_ready),
+         .heap_valid     (DMA_heap_valid),
+         .heap_ready     (DMA_heap_ready),
+         .heap_addr      (DMA_heap_addr),
+         .heap_wdata     (DMA_heap_wdata),
+         .heap_wstrb     (DMA_heap_wstrb),
+         .heap_rdata     (DMA_heap_rdata),
+         .rx_axis_tdata  (rx_axis_tdata),
+         .rx_axis_tkeep  (rx_axis_tkeep),
+         .rx_axis_tvalid (rx_axis_tvalid),
+         .rx_axis_tready (rx_axis_tready),
+         .rx_axis_tlast  (rx_axis_tlast),
+         .rx_axis_tuser  (rx_axis_tuser),
+         .tx_axis_tdata  (tx_axis_tdata),
+         .tx_axis_tkeep  (tx_axis_tkeep),
+         .tx_axis_tvalid (tx_axis_tvalid),
+         .tx_axis_tready (tx_axis_tready),
+         .tx_axis_tlast  (tx_axis_tlast),
+         .tx_axis_tuser  (tx_axis_tuser),
+         .rx_DMA_int     (rx_DMA_int)
+         // .tx_DMA_int     (tx_DMA_int)
+      );
+
+    eth_mac_1g_gmii_fifo #(
+        .TARGET("XILINX"),
+        .IODDR_STYLE("IODDR"),
+        .CLOCK_INPUT_STYLE("BUFG"),
+        .ENABLE_PADDING(1),
+        .MIN_FRAME_LENGTH(64),
+        .AXIS_DATA_WIDTH(32),
+        .TX_FIFO_DEPTH(4096),
+        .TX_FRAME_FIFO(1),
+        .RX_FIFO_DEPTH(4096),
+        .RX_FRAME_FIFO(1)
+    )
+    eth_mac_inst (
+        .gtx_clk(clk),
+        .gtx_rst(~resetn),
+        .logic_clk(clk),
+        .logic_rst(~resetn),
+
+        .tx_axis_tdata(tx_axis_tdata),
+        .tx_axis_tvalid(tx_axis_tvalid),
+        .tx_axis_tready(tx_axis_tready),
+        .tx_axis_tlast(tx_axis_tlast),
+        .tx_axis_tuser(tx_axis_tuser),
+        .tx_axis_tkeep(tx_axis_tkeep),
+
+        .rx_axis_tdata(rx_axis_tdata),
+        .rx_axis_tvalid(rx_axis_tvalid),
+        .rx_axis_tready(rx_axis_tready),
+        .rx_axis_tlast(rx_axis_tlast),
+        .rx_axis_tuser(rx_axis_tuser),
+        .rx_axis_tkeep(rx_axis_tkeep),
+
+        .gmii_rx_clk(phy_rx_clk),
+        .gmii_rxd(phy_rxd),
+        .gmii_rx_dv(phy_rx_dv),
+        .gmii_rx_er(phy_rx_er),
+        .gmii_tx_clk(phy_gtx_clk),
+        .mii_tx_clk(phy_tx_clk),
+        .gmii_txd(phy_txd),
+        .gmii_tx_en(phy_tx_en),
+        .gmii_tx_er(phy_tx_er),
+
+        .tx_fifo_overflow(),
+        .tx_fifo_bad_frame(),
+        .tx_fifo_good_frame(),
+        .rx_error_bad_frame(),
+        .rx_error_bad_fcs(),
+        .rx_fifo_overflow(),
+        .rx_fifo_bad_frame(),
+        .rx_fifo_good_frame(),
+        .speed(),
+
+        .ifg_delay(12)
+    );
 // baud 115200
 // 250MHz 2170
 // 200MHz 1736
 // 125MHz 1085
-  simpleuart #(.DEFAULT_DIV(32'd1085))
+  simpleuart #(.DEFAULT_DIV(32'd50))
   uart (
     .clk         (clk         ),
     .resetn      (resetn      ),
@@ -95,9 +276,9 @@ module top(
     .ser_tx      (txd      ),
     .ser_rx      (rxd      ),
 
-    .reg_div_we  (simpleuart_reg_div_sel ? mem_wstrb : 4'b 0000),
-    .reg_div_di  (mem_wdata),
-    .reg_div_do  (simpleuart_reg_div_do),
+    .reg_div_we  (0),
+    // .reg_div_di  (mem_wdata),
+    // .reg_div_do  (simpleuart_reg_div_do),
 
     .reg_dat_we  (simpleuart_reg_dat_sel ? mem_wstrb[0] : 1'b 0),
     .reg_dat_re  (simpleuart_reg_dat_sel && !mem_wstrb),
@@ -106,16 +287,20 @@ module top(
     .reg_dat_wait(simpleuart_reg_dat_wait)
   );
 
-  assign mem_rdata = simpleuart_reg_div_sel ? simpleuart_reg_div_do : 
-               simpleuart_reg_dat_sel ? simpleuart_reg_dat_do :
-               ram_sel ? ram_rdata : 32'h 0000_0000 ;
+  assign mem_rdata = simpleuart_reg_dat_sel ? simpleuart_reg_dat_do :
+               text_valid ? text_rdata : 
+               mux_heap_valid ? mux_heap_rdata : 
+               DMA_valid ? DMA_rdata : 32'h 0000_0000 ;
 
-  assign mem_ready = ram_ready || io_ready || simpleuart_reg_div_sel || 
-      (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
+  assign mem_ready = (text_valid && text_ready) || 
+                     (mux_heap_valid && mux_heap_ready) || 
+                     (io_valid && io_ready) || 
+                     (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait) ||
+                     (DMA_valid && DMA_rdata) ;
   
 endmodule
 
-module RAM(
+module RAM_64KB(
   input clk, resetn,
 
   input            mem_valid,
@@ -130,42 +315,22 @@ module RAM(
   wire [31:0] ram_rdata_1;
   wire [31:0] ram_rdata_2;
   wire [31:0] ram_rdata_3;
-  wire [31:0] ram_rdata_4;
-  wire [31:0] ram_rdata_5;
-  wire [31:0] ram_rdata_6;
-  wire [31:0] ram_rdata_7;
 
   ram_4k_32 _ram_4k_32_0(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_0, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b000)) ? mem_wstrb : 4'b0,
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b00)) ? mem_wstrb : 4'b0,
     mem_valid);
   ram_4k_32 _ram_4k_32_1(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_1, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b001)) ? mem_wstrb : 4'b0,
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b01)) ? mem_wstrb : 4'b0,
     mem_valid);
   ram_4k_32 _ram_4k_32_2(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_2, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b010)) ? mem_wstrb : 4'b0,
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b10)) ? mem_wstrb : 4'b0,
     mem_valid);
   ram_4k_32 _ram_4k_32_3(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_3, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b011)) ? mem_wstrb : 4'b0,
-    mem_valid);
-  ram_4k_32 _ram_4k_32_4(clk, mem_addr[13:2],
-    mem_wdata, ram_rdata_4, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b100)) ? mem_wstrb : 4'b0,
-    mem_valid);
-  ram_4k_32 _ram_4k_32_5(clk, mem_addr[13:2],
-    mem_wdata, ram_rdata_5, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b101)) ? mem_wstrb : 4'b0,
-    mem_valid);
-  ram_4k_32 _ram_4k_32_6(clk, mem_addr[13:2],
-    mem_wdata, ram_rdata_6, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b110)) ? mem_wstrb : 4'b0,
-    mem_valid);
-  ram_4k_32 _ram_4k_32_7(clk, mem_addr[13:2],
-    mem_wdata, ram_rdata_7, 
-    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b111)) ? mem_wstrb : 4'b0,
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b11)) ? mem_wstrb : 4'b0,
     mem_valid);
 
   reg ram_ready1, ram_ready2;
@@ -193,31 +358,19 @@ module RAM(
   reg [31:0] ram_rdata_1_reg0;
   reg [31:0] ram_rdata_2_reg0;
   reg [31:0] ram_rdata_3_reg0;
-  reg [31:0] ram_rdata_4_reg0;
-  reg [31:0] ram_rdata_5_reg0;
-  reg [31:0] ram_rdata_6_reg0;
-  reg [31:0] ram_rdata_7_reg0;
 
   always @(posedge clk) begin
     ram_rdata_0_reg0 <= ram_rdata_0;
     ram_rdata_1_reg0 <= ram_rdata_1;
     ram_rdata_2_reg0 <= ram_rdata_2;
     ram_rdata_3_reg0 <= ram_rdata_3;
-    ram_rdata_4_reg0 <= ram_rdata_4;
-    ram_rdata_5_reg0 <= ram_rdata_5;
-    ram_rdata_6_reg0 <= ram_rdata_6;
-    ram_rdata_7_reg0 <= ram_rdata_7;
   end
 
   assign mem_rdata = 
-        (mem_valid && (mem_addr[16:14] == 3'b000)) ? ram_rdata_0_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b001)) ? ram_rdata_1_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b010)) ? ram_rdata_2_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b011)) ? ram_rdata_3_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b100)) ? ram_rdata_4_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b101)) ? ram_rdata_5_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b110)) ? ram_rdata_6_reg0 : 
-        (mem_valid && (mem_addr[16:14] == 3'b111)) ? ram_rdata_7_reg0 : 32'h 0000_0000 ;
+        (mem_valid && (mem_addr[15:14] == 2'b00)) ? ram_rdata_0_reg0 : 
+        (mem_valid && (mem_addr[15:14] == 2'b01)) ? ram_rdata_1_reg0 : 
+        (mem_valid && (mem_addr[15:14] == 2'b10)) ? ram_rdata_2_reg0 : 
+        (mem_valid && (mem_addr[15:14] == 2'b11)) ? ram_rdata_3_reg0 : 32'h 0000_0000 ;
 
 endmodule
 
@@ -290,35 +443,5 @@ module bram_4k_8(
     end      
 
   assign dout = mem[addr1];
-
-endmodule
-
-module dbram_4k_8 (clka,clkb,ena,enb,wea,web,addra,addrb,dia,dib,doa,dob);
-
-    input  clka,clkb,ena,enb,wea,web;
-    input  [5:0] addra,addrb;
-    input  [7:0] dia,dib;
-    output [7:0] doa,dob;
-    reg    [7:0] ram [4095:0];
-    reg    [7:0] doa,dob;
-
-     
-    always @(posedge clka) begin
-        if (ena)    
-        begin
-            if (wea)
-                ram[addra] <= dia;
-            doa <= ram[addra];
-        end
-    end
-
-    always @(posedge clkb) begin
-        if (enb)
-        begin
-            if (web)
-                ram[addrb] <= dib;
-            dob <= ram[addrb];
-        end
-    end
 
 endmodule

@@ -13,7 +13,7 @@
 #define sint16_t signed short
 #define sint8_t signed char
 
-#define heap_size 1024
+#define heap_size 64*1024
 
 #define UART_DIV   0x80000004
 #define UART_DATA  0x80000008

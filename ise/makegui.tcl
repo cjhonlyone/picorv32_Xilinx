@@ -7,10 +7,27 @@ project set package ff484
 project set speed -1
 # add all the source HDLs and ucf
 xfile add ../rtl/chip.v
-xfile add ../rtl/picorv32.v ../rtl/top.v ../rtl/simpleuart.v
+xfile add ../rtl/picorv32.v ../rtl/top.v ../rtl/simpleuart.v ../rtl/DMAC.v
+
+xfile add ../rtl/eth/axis_adapter.v
+xfile add ../rtl/eth/axis_async_fifo.v
+xfile add ../rtl/eth/axis_async_fifo_adapter.v
+xfile add ../rtl/eth/axis_gmii_rx.v
+xfile add ../rtl/eth/axis_gmii_tx.v
+xfile add ../rtl/eth/eth_mac_1g.v
+xfile add ../rtl/eth/eth_mac_1g_gmii.v
+xfile add ../rtl/eth/eth_mac_1g_gmii_fifo.v
+xfile add ../rtl/eth/gmii_phy_if.v
+xfile add ../rtl/eth/lfsr.v
+xfile add ../rtl/eth/oddr.v
+xfile add ../rtl/eth/ssio_sdr_in.v
+xfile add ../rtl/eth/ssio_sdr_out.v
+
 xfile add ../rtl/chip.bmm
 xfile add ../rtl/chip.ucf
 xfile add ../rtl/tb_chip.v -view "Simulation"
+
+
 # set batch application options :
 # 1. set synthesis optimization goal to speed
 # 2. ignore any LOCs in ngdbuild

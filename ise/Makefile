@@ -12,7 +12,7 @@ chip:
 #	${ISE_DIR}/impact -batch impact.cmd
 
 test:
-	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../sw/firmware.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../tests/firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
 firmware:
@@ -20,7 +20,7 @@ firmware:
 	${ISE_DIR}/impact -batch impact.cmd
 
 dhry:
-	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../dhrystone/dhry.elf -bt chip.bit -o b chip_mem.bit;
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../tests/dhrystone/dhry.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
 
 xdl:

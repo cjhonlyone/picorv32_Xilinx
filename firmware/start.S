@@ -244,7 +244,7 @@ start:
 	addi x31, zero, 0
 
 	/* set stack pointer */
-	lui sp,(128*1024)>>12
+	lui sp,(64*1024)>>12
 
 	/* call hello C code */
 	jal ra,main

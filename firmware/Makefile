@@ -9,7 +9,7 @@ endif
 CCFLAGS = -march=rv32im -mabi=ilp32 -Wall
 FIRMWARE_OBJS = start.o irq.o main.o
 MYLIBS_OBJS = mylib.o
-RAM_SIZE = 131072 #128*1024
+RAM_SIZE = 65536 #64*1024
 BLOCK_RAM_SIZE = 4096
 
 firmware: firmware.bin

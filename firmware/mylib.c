@@ -1,6 +1,8 @@
 #include "mylib.h"
 
-char heap_memory[heap_size];
+#define _heap_start 0x00010000;
+
+char *heap_memory = _heap_start;
 int heap_memory_used = 0;
 
 void uart_tx_data(int x)

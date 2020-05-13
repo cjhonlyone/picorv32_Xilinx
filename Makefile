@@ -36,15 +36,15 @@ hw_clean:
 test:
 	echo $(Verilog_FILES)
 
-hw_sim: ise/tb_chip.vvp
+hw_sim: rtl/tb_chip.vvp
 	vvp -N $<
 
-ise/tb_chip.vvp: $(isedir_FILES) $(glbl) $(rtldir_FILES)
-	iverilog -s testbench -y $(unisims_DIR) -y $(unimacro_DIR) -I ./ise \
-		-o $@ $(isedir_FILES) $(glbl)
+rtl/tb_chip.vvp: $(rtldir_FILES) $(glbl) 
+	iverilog -s testbench -y $(unisims_DIR) -y $(unimacro_DIR) -I ./rtl -I ./rlt/eth \
+		-o $@ rtl/tb_chip.v rtl/chip.v $(glbl)
 	chmod -x $@
 
 hw_sim_clean:
-	rm -rf testbench.vcd #testbench.gtkw
-	rm -rf ise/tb_chip.vvp
+	rm -rf rtl/testbench.vcd #testbench.gtkw
+	rm -rf rtl/tb_chip.vvp
 

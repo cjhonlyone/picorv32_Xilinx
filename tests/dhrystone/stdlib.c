@@ -24,7 +24,7 @@ int heap_memory_used = 0;
 #endif
 
 #define LED            0x80000000
-#define UART_TX_DATA   0x80000004
+#define UART_TX_DATA   0x80000008
 #define UART_TX_READY  0x80000008
 #define UART_RX_DATA   0x8000000c
 #define UART_RX_READY  0x80000010
@@ -42,7 +42,8 @@ int uart_rx_ready()
 { return *(volatile unsigned int*)UART_RX_READY; }
 
 void putc(char c)
-{ while (!uart_tx_ready()) ;
+{ 
+	// while (!uart_tx_ready()) ;
   uart_tx_data(c); }
   
 long time()
@@ -74,7 +75,7 @@ char *malloc(int size)
 
 static void printf_c(int c)
 {
-	while (!uart_tx_ready()) ;
+	// while (!uart_tx_ready()) ;
 		uart_tx_data(c);
 }
 

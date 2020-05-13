@@ -1,7 +1,7 @@
 #include "util.h"
 
 #define LED            0x80000000
-#define UART_TX_DATA   0x80000004
+#define UART_TX_DATA   0x80000008
 #define UART_TX_READY  0x80000008
 #define UART_RX_DATA   0x8000000c
 #define UART_RX_READY  0x80000010
@@ -27,7 +27,7 @@ void delay(int m)
     asm volatile("nop"); } }
 
 void putc(char c)
-{ while (!uart_tx_ready()) ;
+{ //while (!uart_tx_ready()) ;
   uart_tx_data(c); }
 
 void puts(char* s)
