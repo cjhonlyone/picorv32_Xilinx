@@ -1,0 +1,22 @@
+PORT = contrib/ports/riscv
+
+COMMON_SRCS = $(PORT)/netif/pqueue.c
+
+ADAPTER_INCLUDES = $(PORT)/include/arch/cc.h \
+		   $(PORT)/include/arch/cpu.h \
+		   $(PORT)/include/arch/perf.h \
+		   $(PORT)/include/arch/sys_arch.h \
+		   $(PORT)/include/arch/lwipopts.h \
+		   $(PORT)/include/arch/lwippools.h \
+		   $(PORT)/include/netif/pqueue.h \
+		   $(PORT)/include/netif/riscvnetif.h \
+		   $(PORT)/include/netif/riscvdma.h
+		   
+ETHERNET_SRCS = $(PORT)/netif/riscvnetif.c\
+           $(PORT)/netif/riscvdma.c
+
+ADAPTER_SRCS = $(COMMON_SRCS)
+ADAPTER_SRCS += $(ETHERNET_SRCS)
+
+ADAPTER_OBJS1 = $(ADAPTER_SRCS:%.c=%.o)
+ADAPTER_OBJS = $(notdir $(ADAPTER_OBJS1))

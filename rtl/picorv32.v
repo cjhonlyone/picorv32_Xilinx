@@ -21,7 +21,7 @@
 /* verilator lint_off PINMISSING */
 /* verilator lint_off CASEOVERLAP */
 /* verilator lint_off CASEINCOMPLETE */
-
+// `include "tb_chip.v"
 `timescale 1 ns / 1 ps
 // `default_nettype none
 // `define DEBUGNETS
@@ -220,37 +220,42 @@ module picorv32 #(
 
 `ifdef DEBUGREGS
 	wire [31:0] dbg_reg_x0  = 0;
-	wire [31:0] dbg_reg_x1  = cpuregs[1];
-	wire [31:0] dbg_reg_x2  = cpuregs[2];
-	wire [31:0] dbg_reg_x3  = cpuregs[3];
-	wire [31:0] dbg_reg_x4  = cpuregs[4];
-	wire [31:0] dbg_reg_x5  = cpuregs[5];
-	wire [31:0] dbg_reg_x6  = cpuregs[6];
-	wire [31:0] dbg_reg_x7  = cpuregs[7];
-	wire [31:0] dbg_reg_x8  = cpuregs[8];
-	wire [31:0] dbg_reg_x9  = cpuregs[9];
-	wire [31:0] dbg_reg_x10 = cpuregs[10];
-	wire [31:0] dbg_reg_x11 = cpuregs[11];
-	wire [31:0] dbg_reg_x12 = cpuregs[12];
-	wire [31:0] dbg_reg_x13 = cpuregs[13];
-	wire [31:0] dbg_reg_x14 = cpuregs[14];
-	wire [31:0] dbg_reg_x15 = cpuregs[15];
-	wire [31:0] dbg_reg_x16 = cpuregs[16];
-	wire [31:0] dbg_reg_x17 = cpuregs[17];
-	wire [31:0] dbg_reg_x18 = cpuregs[18];
-	wire [31:0] dbg_reg_x19 = cpuregs[19];
-	wire [31:0] dbg_reg_x20 = cpuregs[20];
-	wire [31:0] dbg_reg_x21 = cpuregs[21];
-	wire [31:0] dbg_reg_x22 = cpuregs[22];
-	wire [31:0] dbg_reg_x23 = cpuregs[23];
-	wire [31:0] dbg_reg_x24 = cpuregs[24];
-	wire [31:0] dbg_reg_x25 = cpuregs[25];
-	wire [31:0] dbg_reg_x26 = cpuregs[26];
-	wire [31:0] dbg_reg_x27 = cpuregs[27];
-	wire [31:0] dbg_reg_x28 = cpuregs[28];
-	wire [31:0] dbg_reg_x29 = cpuregs[29];
-	wire [31:0] dbg_reg_x30 = cpuregs[30];
-	wire [31:0] dbg_reg_x31 = cpuregs[31];
+	wire [31:0] dbg_reg_ra  = cpuregs[1];
+	wire [31:0] dbg_reg_sp  = cpuregs[2];
+	wire [31:0] dbg_reg_gp  = cpuregs[3];
+	wire [31:0] dbg_reg_tp  = cpuregs[4];
+	wire [31:0] dbg_reg_t0  = cpuregs[5];
+	wire [31:0] dbg_reg_t1  = cpuregs[6];
+	wire [31:0] dbg_reg_t2  = cpuregs[7];
+	wire [31:0] dbg_reg_s0  = cpuregs[8];
+	wire [31:0] dbg_reg_s1  = cpuregs[9];
+	wire [31:0] dbg_reg_a0  = cpuregs[10];
+	wire [31:0] dbg_reg_a1  = cpuregs[11];
+	wire [31:0] dbg_reg_a2  = cpuregs[12];
+	wire [31:0] dbg_reg_a3  = cpuregs[13];
+	wire [31:0] dbg_reg_a4  = cpuregs[14];
+	wire [31:0] dbg_reg_a5  = cpuregs[15];
+	wire [31:0] dbg_reg_a6  = cpuregs[16];
+	wire [31:0] dbg_reg_a7  = cpuregs[17];
+	wire [31:0] dbg_reg_s2  = cpuregs[18];
+	wire [31:0] dbg_reg_s3  = cpuregs[19];
+	wire [31:0] dbg_reg_s4  = cpuregs[20];
+	wire [31:0] dbg_reg_s5  = cpuregs[21];
+	wire [31:0] dbg_reg_s6  = cpuregs[22];
+	wire [31:0] dbg_reg_s7  = cpuregs[23];
+	wire [31:0] dbg_reg_s8  = cpuregs[24];
+	wire [31:0] dbg_reg_s9  = cpuregs[25];
+	wire [31:0] dbg_reg_s10 = cpuregs[26];
+	wire [31:0] dbg_reg_s11 = cpuregs[27];
+	wire [31:0] dbg_reg_t3  = cpuregs[28];
+	wire [31:0] dbg_reg_t4  = cpuregs[29];
+	wire [31:0] dbg_reg_t5  = cpuregs[30];
+	wire [31:0] dbg_reg_t6  = cpuregs[31];
+	wire [31:0] dbg_reg_x32 = cpuregs[32];
+	wire [31:0] dbg_reg_x33 = cpuregs[33];
+	wire [31:0] dbg_reg_x34 = cpuregs[34];
+	wire [31:0] dbg_reg_x35 = cpuregs[35];
+
 `endif
 
 	// Internal PCPI Cores
@@ -1348,7 +1353,7 @@ module picorv32 #(
 			cpuregs[15],cpuregs[16],cpuregs[17],cpuregs[18],cpuregs[19],
 			cpuregs[20],cpuregs[21],cpuregs[22],cpuregs[23],cpuregs[24],
 			cpuregs[25],cpuregs[26],cpuregs[27],cpuregs[28],cpuregs[29],
-			cpuregs[30],cpuregs[31]) begin
+			cpuregs[30],cpuregs[31],cpuregs[32],cpuregs[33],cpuregs[34],cpuregs[35]) begin
 		decoded_rs = 'bx;
 		if (ENABLE_REGS_DUALPORT) begin
 `ifndef RISCV_FORMAL_BLACKBOX_REGS

@@ -1,116 +1,211 @@
 #include "mylib.h"
+#include "pqueue.h"
+#include "riscvdma.h"
+#include "riscvnetif.h"
 
-//BCD码转为二进制 
-unsigned bcd2bin(unsigned char val)
-{
-	return (val & 0x0f) + (val >> 4) * 10;
-}
+#include "lwip/tcp.h"
 
-//二进制转为BCD码 
-unsigned char bin2bcd(unsigned val)
-{
-	return ((val / 10) << 4) + val % 10;
-}
+
+int start_application();
+void tcp_fasttmr(void);
+void tcp_slowtmr(void);
+
+void lwip_init();
+
+
+
+// struct netif echo_netif_t;
+// struct mymac mymac_s_t;
+static struct netif server_netif;
+struct netif *echo_netif;
+struct mymac *mymac_s;
 
 void delay(int m)
 { int i;
   for (i=0; i<m; i++) {
     asm volatile("nop"); } }
 
-int a[8] = {1,2,3,4};
-int b[8];
-
-static int c;
-static int d = 0x55;
 
 int main()
 { 
-	int e[8] = {1,2,3,4};
-	int f[8];
 
-	static int g;
-	static int h = 0x55;
+	struct ip_addr ipaddr, netmask, gw;
 
-	// char * p;
-	// p = malloc(32);
+	/* the mac address of the board. this should be unique per board */
+	unsigned char mac_ethernet_address[] =
+	{ 0x00, 0x0a, 0x35, 0x00, 0x01, 0x02 };
+	/* initliaze IP addresses to be used */
+	IP4_ADDR(&ipaddr,  192, 168,   1, 10);
+	IP4_ADDR(&netmask, 255, 255, 255,  0);
+	IP4_ADDR(&gw,      192, 168,   1,  1);
 
-	// *(int*)p = 0x22334455;
+	lwip_init();
 
-	// p = malloc(32);
+	echo_netif = &server_netif;
+	netif_add(echo_netif, &ipaddr, &netmask, &gw,
+						(void*)mymac_s,
+						ethernetif_init,
+						ethernet_input
+						);
 
-	// *(int*)p = 0x88888888;
+	netif_set_default(echo_netif);
+	/* specify that the network if is up */
+	netif_set_up(echo_netif);
 
-	char char_va;
-	short  short_va;
-	int int_va;
-	long long_va;
-	long long longlong_va;
-	void*  void_va;
-	float  float_va;
-	double double_va;
-	long double longdouble_va;
+	/* start the application (web server, rxtest, txtest, etc..) */
+	start_application();
 
-	printf("size of char : %d\n",sizeof(char_va));
-	printf("size of short  : %d\n",sizeof(short_va));
-	printf("size of int : %d\n",sizeof(int_va));
-	printf("size of long : %d\n",sizeof(long_va));
-	printf("size of long long  : %d\n",sizeof(longlong_va));
-	printf("size of void* : %d\n",sizeof(void_va));
-	printf("size of float  : %d\n",sizeof(float_va));
-	printf("size of double : %d\n",sizeof(double_va));
-	printf("size of long double : %d\n",sizeof(longdouble_va));
+	/* receive and process packets */
 
-	int_va = 0x11223344;
+	long time_ = time();
+	
+	uint32_t kk = 0;
 
-	printf("int_va = %08x\n",int_va);
-	printf("&int_va = %08x\n",&int_va);
-	printf("*%08x = %02x\n",(((char *)(&int_va))+0),*(((char *)(&int_va))+0));
-	printf("*%08x = %02x\n",(((char *)(&int_va))+1),*(((char *)(&int_va))+1));
-	printf("*%08x = %02x\n",(((char *)(&int_va))+2),*(((char *)(&int_va))+2));
-	printf("*%08x = %02x\n",(((char *)(&int_va))+3),*(((char *)(&int_va))+3));
-	if ((*(char *)&int_va) == 0x11)
-		printf("Big Endian\n");
-	else if ((*(char *)&int_va) == 0x44)
-		printf("Small Endian\n");
+	while (1) {
+		if ((time() - time_) >= 31250000)
+		{
+			tcp_fasttmr();
+			kk ++;
+			time_ = time();
+		}
+		if (kk == 2)
+		{
+			tcp_slowtmr();
+			kk=0;
+			// printf("time_ %d\n\n",time());
+
+		}
+		ethernetif_input(echo_netif);
+		// printf("time_ %d\n\n",time());
+	}
+  
+}
+
+err_t recv_callback(void *arg, struct tcp_pcb *tpcb,
+                               struct pbuf *p, err_t err)
+{
+	/* do not read the packet if we are not in ESTABLISHED state */
+	if (!p) {
+		tcp_close(tpcb);
+		tcp_recv(tpcb, NULL);
+		return ERR_OK;
+	}
+
+	/* indicate that the packet has been received */
+	tcp_recved(tpcb, p->len);
+
+	/* echo back the payload */
+	/* in this case, we assume that the payload is < TCP_SND_BUF */
+	if (tcp_sndbuf(tpcb) > p->len) {
+		err = tcp_write(tpcb, p->payload, p->len, 1);
+	} else
+		// xil_printf("no space in tcp_sndbuf\n\r");
+
+	/* free the received pbuf */
+	pbuf_free(p);
+
+	return ERR_OK;
+}
+
+err_t accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
+{
+	static int connection = 1;
+
+	/* set the receive callback for this connection */
+	tcp_recv(newpcb, recv_callback);
+
+	/* just use an integer number indicating the connection id as the
+	   callback argument */
+	tcp_arg(newpcb, (void*)connection);
+
+	/* increment for subsequent accepted connections */
+	connection++;
+
+	return ERR_OK;
+}
 
 
-	/*size of char : 1
-	size of short  : 2
-	size of int : 4
-	size of long : 4
-	size of long long  : 8
-	size of void* : 4
-	size of float  : 4
-	size of double : 8
-	size of long double : 16
-	int_va = 11223344
-	&int_va = 0001ffec
-	*0001ffec = 44
-	*0001ffed = 33
-	*0001ffee = 22
-	*0001ffef = 11
-	Small Endian*/
+int start_application()
+{
+	struct tcp_pcb *pcb;
+	err_t err;
+	unsigned port = 7;
 
-	printf("&a[8] = %08x\n",a);
-	printf("&b[8] = %08x\n",b);
-	printf("&c = %08x\n",&c);
-	printf("&d = %08x\n",&d);
+	/* create new TCP PCB structure */
+	pcb = tcp_new();
+	if (!pcb) {
+		// xil_printf("Error creating PCB. Out of Memory\n\r");
+		return -1;
+	}
 
-	printf("&e[8] = %08x\n",e);
-	printf("&f[8] = %08x\n",f);
-	printf("&g = %08x\n",&g);
-	printf("&h = %08x\n",&h);
+	/* bind to specified @port */
+	err = tcp_bind(pcb, IP_ADDR_ANY, port);
+	if (err != ERR_OK) {
+		// xil_printf("Unable to bind to port %d: err = %d\n\r", port, err);
+		return -2;
+	}
 
-	while(1)
-	{
-		for (int i = 0;i<8000;i++) // 1600ms
-			delay(1000); // 400us
+	/* we do not need any arguments to callback functions */
+	tcp_arg(pcb, NULL);
 
-		//led(1);
+	/* listen for connections */
+	pcb = tcp_listen(pcb);
+	if (!pcb) {
+		// xil_printf("Out of memory while tcp_listen\n\r");
+		return -3;
+	}
+
+	/* specify callback to use for incoming connections */
+	tcp_accept(pcb, accept_callback);
+
+	// xil_printf("TCP echo server started @ port %d\n\r", port);
+
+	return 0;
+}
+
+
+
+
+// #include "mylib.h"
+// // #include "dma.h"
+
+// void delay(int m)
+// { int i;
+//   for (i=0; i<m; i++) {
+//     asm volatile("nop"); } }
+
+// int main()
+// {
+// 	// int i = 10000;
+// 	// printf("10000, %d",i);
+// 	// dma_init();
+// 	while(1)
+// 	{
+// 		for (int j = 0;j < 8000;j++)
+// 			delay(1000);
+// 		// printf("while\n");
+// 	}
+// }
+
+uint32_t *irq(uint32_t *regs, uint32_t irqs)
+{
+	// static unsigned int ext_irq_4_count = 0;
+	// static unsigned int ext_irq_5_count = 0;
+	static unsigned int timer_irq_count = 0;
+	// printf("irq\n");
+
+	if ((irqs & (1<<5)) != 0) {
+		dma_rx_irq(echo_netif);
+		// print_str("[EXT-IRQ-5]");
+	}
+
+	if ((irqs & 1) != 0) {
+		timer_irq_count++;
+		// print_str("[TIMER-IRQ]");
 		// *(volatile unsigned int*)0x80000000 = i;
 		// i++;
-		printf("picorv32_v6\n");
+		// enable_timer(125000000);
 	}
-	return 0; 
 
+	return regs;
 }

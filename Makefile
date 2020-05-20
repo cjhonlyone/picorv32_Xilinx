@@ -3,6 +3,7 @@
 MAKE = make
 FIRMWAREDIR = firmware
 ISEPRJDIR = ise
+VERILATOR = verilator
 # can not work
 # unisims_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/verilog/src/unisims
 
@@ -21,8 +22,7 @@ rtldir_FILES = $(wildcard rtl/*.v)
 sw: 
 	cd $(FIRMWAREDIR) && $(MAKE) firmware
 
-sw_clean:
-	cd $(FIRMWAREDIR) && $(MAKE) clean
+
 
 hw:
 	cd $(ISEPRJDIR) && $(MAKE) chip
@@ -30,8 +30,7 @@ hw:
 hw_prog:
 	cd $(ISEPRJDIR) && $(MAKE) firmware
 
-hw_clean:
-	cd $(ISEPRJDIR) && $(MAKE) clean
+
 
 test:
 	echo $(Verilog_FILES)
@@ -44,7 +43,15 @@ rtl/tb_chip.vvp: $(rtldir_FILES) $(glbl)
 		-o $@ rtl/tb_chip.v rtl/chip.v $(glbl)
 	chmod -x $@
 
+clean: sw_clean hw_clean hw_sim_clean
+	rm -rf _xmsgs
+
+sw_clean:
+	cd $(FIRMWAREDIR) && $(MAKE) clean
+
+hw_clean:
+	cd $(ISEPRJDIR) && $(MAKE) clean
+
 hw_sim_clean:
 	rm -rf rtl/testbench.vcd #testbench.gtkw
 	rm -rf rtl/tb_chip.vvp
-

@@ -18,13 +18,7 @@ int putchar(int ch)
   return 1;
 }
 
-size_t strnlen(const char *str, size_t maxsize)
-{
-    size_t n;
-    for (n = 0; n < maxsize && *str; n++, str++)
-        ;
-    return n;
-}
+
 
 static void sprintf_putch(int ch, void** data)
 {
@@ -298,15 +292,15 @@ long insn()
   return insns;
 }
 
-char *malloc(int size)
-{
-  char *p = heap_memory + heap_memory_used;
-  // printf("[malloc(%d) -> %d (%d..%d)]", size, (int)p, heap_memory_used, heap_memory_used + size);
-  heap_memory_used += size;
-  if (heap_memory_used > heap_size)
-    asm volatile ("ebreak");
-  return p;
-}
+// char *malloc(int size)
+// {
+//   char *p = heap_memory + heap_memory_used;
+//   // printf("[malloc(%d) -> %d (%d..%d)]", size, (int)p, heap_memory_used, heap_memory_used + size);
+//   heap_memory_used += size;
+//   if (heap_memory_used > heap_size)
+//     asm volatile ("ebreak");
+//   return p;
+// }
 
 void *memcpy(void *aa, const void *bb, long n)
 {
@@ -315,6 +309,59 @@ void *memcpy(void *aa, const void *bb, long n)
   const char *b = bb;
   while (n--) *(a++) = *(b++);
   return aa;
+}
+
+void* memset(void* dst,int val, size_t count)
+{
+    void* ret = dst;
+    while(count--)
+    {
+        *(char*)dst = (char)val;
+        dst = (char*)dst + 1;
+    }
+    return ret;
+}
+
+int memcmp(const void *buffer1,const void *buffer2,int count)
+
+{
+
+   if (!count)
+
+      return(0);
+
+   while ( --count && *(char *)buffer1 == *(char *)buffer2)
+
+   {
+
+      buffer1 = (char *)buffer1 + 1;
+
+        buffer2 = (char *)buffer2 + 1;
+
+   }
+
+   return( *((unsigned char *)buffer1) - *((unsigned char *)buffer2) );
+
+}
+
+ 
+ 
+size_t strnlen(const char *str, size_t maxsize)
+{
+    size_t n;
+    for (n = 0; n < maxsize && *str; n++, str++)
+        ;
+    return n;
+}
+
+
+size_t strlen (const char * str)
+{      
+        const char *eos = str;
+ 
+        while( *eos++ ) ;
+ 
+        return( eos - str - 1 );
 }
 
 char *strcpy(char* dst, const char* src)

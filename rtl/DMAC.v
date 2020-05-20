@@ -1,5 +1,8 @@
 `timescale 1 ns / 1 ps
-module DMAC(
+module DMAC #
+(
+  parameter DMA_RX_INTERVAL = 32'd1249999
+)(
 	input clk, resetn,
 
 	input             mem_valid,
@@ -44,6 +47,7 @@ module DMAC(
 	reg [31:0] tx_BD_len[7:0];
 
 	reg [ 7:0] rx_BD_clr;
+	reg [ 7:0] rx_BD_sta_r;
 	reg [ 7:0] rx_BD_sta;
 
 	reg [ 7:0] tx_BD_sta;
@@ -82,7 +86,7 @@ module DMAC(
 			tx_BD_len[7] <= 0;
 
 			// read only 
-			// rx_BD_sta
+			// rx_BD_sta_r
 
 			rx_BD_clr <= 0;
 			ENABLE_DMA <= 0;
@@ -233,11 +237,21 @@ module DMAC(
     reg        tx_axis_tlast_m1;
     reg        tx_axis_tuser_m1;
 
+    reg [31:0] tx_axis_tdata_m2;
+    reg [ 3:0] tx_axis_tkeep_m2;
+    reg        tx_axis_tvalid_m2;
+    reg        tx_axis_tlast_m2;
+    reg        tx_axis_tuser_m2;
+
     reg [31:0] rtx_axis_tdata;
     reg [ 3:0] rtx_axis_tkeep;
     reg        rtx_axis_tvalid;
     reg        rtx_axis_tlast;
     reg        rtx_axis_tuser;
+
+    reg [47:0] dst_mac;
+
+    reg drop_frame;
 
 	always @(*) begin
 		case(rx_axis_tkeep)
@@ -261,13 +275,13 @@ module DMAC(
 // FSM
 
 localparam [ 6:0]
-    STATE_IDLE  = 7'b0000001,
-    STATE_WAIT  = 7'b0000010,
-    STATE_ABUS  = 7'b0000100,
-    STATE_WRITE = 7'b0001000,
-    STATE_READ  = 7'b0010000,
-    STATE_KEEP  = 7'b0100000,
-    STATE_FULL  = 7'b1000000;
+    STATE_IDLE  = 7'b000_0001,
+    STATE_WAIT  = 7'b000_0010,
+    STATE_ABUS  = 7'b000_0100,
+    STATE_WRITE = 7'b000_1000,
+    STATE_READ  = 7'b001_0000,
+    STATE_KEEP  = 7'b010_0000,
+    STATE_FULL  = 7'b100_0000;
 
     reg [ 6:0] DMArx_cur_state;
     reg [ 6:0] DMArx_nxt_state;
@@ -285,22 +299,22 @@ localparam [ 6:0]
 				DMArx_nxt_state = ENABLE_DMA ? STATE_WAIT : STATE_IDLE;
 			end
 			STATE_WAIT: begin
-				DMArx_nxt_state = (rx_axis_tvalid | tx_sta_valid) ? STATE_ABUS : STATE_WAIT;
+				DMArx_nxt_state = (((&rx_BD_sta_r==0)&&(rx_axis_tvalid==1)) | tx_sta_valid) ? STATE_ABUS : STATE_WAIT;
 			end
 			STATE_ABUS: begin
 				DMArx_nxt_state = BUS_ready ? (tx_sta_valid ? STATE_READ : STATE_WRITE) : STATE_ABUS;
 			end			
 			STATE_WRITE: begin
-				DMArx_nxt_state = rx_axis_tlast_m ? STATE_FULL : STATE_WRITE;
+				DMArx_nxt_state = rx_axis_tlast_m ? STATE_WAIT : STATE_WRITE;
 			end
 			STATE_READ: begin
 				DMArx_nxt_state = rtx_axis_tlast ? STATE_KEEP : STATE_READ;
 			end	
 			STATE_KEEP: begin
-				DMArx_nxt_state = STATE_WAIT;
+				DMArx_nxt_state = tx_sta_ready ? STATE_WAIT : STATE_KEEP;
 			end	
 			STATE_FULL: begin
-				DMArx_nxt_state = (&rx_BD_sta == 0) ? STATE_WAIT : STATE_FULL;
+				DMArx_nxt_state = (&rx_BD_sta_r == 0) ? STATE_WAIT : STATE_FULL;
 			end
 			default:DMArx_nxt_state = STATE_IDLE;
 		endcase
@@ -387,15 +401,13 @@ localparam [ 6:0]
 				STATE_WRITE: begin
 					heap_valid <= 1;
 					heap_addr <= rx_axis_tready_m ? (heap_addr + 4) : heap_addr;
-					heap_wdata <= {rx_axis_tdata[7:0],rx_axis_tdata[15:8],
-									rx_axis_tdata[23:16],rx_axis_tdata[31:24]};
-					heap_wstrb <= {rx_axis_tkeep[0],rx_axis_tkeep[1],
-									rx_axis_tkeep[2],rx_axis_tkeep[3]};
+					heap_wdata <= rx_axis_tdata;
+					heap_wstrb <= rx_axis_tkeep;
 
 					BUS_valid <= 1;
-					BD_frame_len <= rx_axis_tready ? (BD_frame_len + keep2bytes) : BD_frame_len;
+					BD_frame_len <= rx_axis_tready ? (BD_frame_len + keep2bytes) : 0;
 
-					rx_axis_tready <= 1;
+					rx_axis_tready <= rx_axis_tlast ? 0 : 1;
 
 					tx_sta_ready <= 0;
 
@@ -416,7 +428,7 @@ localparam [ 6:0]
 
 					rx_axis_tready <= 0;
 
-					tx_sta_ready <= 1;
+					tx_sta_ready <= 0;
 
 					rtx_axis_tvalid <= 1;
 					rtx_axis_tdata <= 0;
@@ -435,7 +447,7 @@ localparam [ 6:0]
 
 					rx_axis_tready <= 0;
 
-					tx_sta_ready <= 0;
+					tx_sta_ready <= rtx_axis_tvalid ? 0 : 1;
 
 					rtx_axis_tdata <= 0;
 					rtx_axis_tkeep <= 0;
@@ -467,6 +479,35 @@ localparam [ 6:0]
 		end
 	end
 	
+	wire keep_frame;
+	assign keep_frame = (dst_mac == 48'hff_ff_ff_ff_ff_ff) ? 1 :
+						(dst_mac == 48'haa_bb_cc_dd_ee_ff) ? 1 : 0;
+
+	always @(posedge clk) begin
+		if (!resetn) begin
+			// reset
+			dst_mac <= 0;
+			drop_frame <= 0;
+		end else if (DMArx_nxt_state == STATE_WRITE) begin
+			case(BD_frame_len[31:2])
+			30'd0: begin
+				dst_mac <= {rx_axis_tdata[7:0],rx_axis_tdata[15:8],
+									rx_axis_tdata[23:16],rx_axis_tdata[31:24],16'd0};
+				drop_frame <= 0;
+			end
+			30'd1: begin
+				dst_mac <= {dst_mac[47:16], rx_axis_tdata[7:0],rx_axis_tdata[15:8]};
+				drop_frame <= 0;
+			end
+			30'd2: begin
+				if (keep_frame == 0)
+					drop_frame <= 1;
+			end
+			default:;
+			endcase
+		end
+	end
+
 	always @(posedge clk) begin
 		if (!resetn) begin
 			// reset
@@ -485,11 +526,17 @@ localparam [ 6:0]
 		tx_axis_tlast_m1 <= rtx_axis_tlast;
 		tx_axis_tuser_m1 <= rtx_axis_tuser;
 
-		tx_axis_tdata <= tx_axis_tdata_m1;
-		tx_axis_tkeep <= tx_axis_tkeep_m1;
-		tx_axis_tvalid <= tx_axis_tvalid_m1;
-		tx_axis_tlast <= tx_axis_tlast_m1;
-		tx_axis_tuser <= tx_axis_tuser_m1;
+		tx_axis_tdata_m2 <= heap_rdata;
+		tx_axis_tkeep_m2 <= tx_axis_tkeep_m1;
+		tx_axis_tvalid_m2 <= tx_axis_tvalid_m1;
+		tx_axis_tlast_m2 <= tx_axis_tlast_m1;
+		tx_axis_tuser_m2 <= tx_axis_tuser_m1;
+
+		tx_axis_tdata <= heap_rdata;
+		tx_axis_tkeep <= tx_axis_tkeep_m2;
+		tx_axis_tvalid <= tx_axis_tvalid_m2;
+		tx_axis_tlast <= tx_axis_tlast_m2;
+		tx_axis_tuser <= tx_axis_tuser_m2;
 	end
 
 	always @(posedge clk) begin
@@ -505,6 +552,7 @@ localparam [ 6:0]
 			rx_BD_len[7] <= 0;
 
 			rx_BD_idx <= 3'd0;
+			rx_BD_sta_r <= 8'b0;
 			rx_BD_sta <= 8'b0;
 
 			tx_BD_idx <= 3'd0;
@@ -513,45 +561,52 @@ localparam [ 6:0]
 			tx_BD_idx <= 3'd0;
 
 			if ({rx_axis_tready_m, rx_axis_tready} == 2'b01) begin
-				rx_BD_sta[rx_BD_idx] <= 1'b1;
+				rx_BD_sta_r[rx_BD_idx] <= 1'b1;
 			end
 				
 
 			if ({rx_axis_tready_m, rx_axis_tready} == 2'b10) begin
-				rx_BD_idx <= rx_BD_idx + 1;
-				rx_BD_len[rx_BD_idx] <= BD_frame_len;
+				if(drop_frame == 1) begin
+					rx_BD_idx <= rx_BD_idx;
+					rx_BD_len[rx_BD_idx] <= 0;
+					rx_BD_sta_r[rx_BD_idx] <= 0;
+				end else begin
+					rx_BD_idx <= rx_BD_idx + 1;
+					rx_BD_len[rx_BD_idx] <= BD_frame_len;
+					rx_BD_sta[rx_BD_idx] <= 1;
+				end
 			end
 				
 			if (rx_BD_clr[0]) begin 
-				rx_BD_sta[0] <= 0; 
+				rx_BD_sta[0] <= 0;rx_BD_sta_r[0] <= 0; 
 				rx_BD_len[0] <= 0; 
 			end
 			if (rx_BD_clr[1]) begin 
-				rx_BD_sta[1] <= 0; 
+				rx_BD_sta[1] <= 0;rx_BD_sta_r[1] <= 0; 
 				rx_BD_len[1] <= 0; 
 			end
 			if (rx_BD_clr[2]) begin 
-				rx_BD_sta[2] <= 0; 
+				rx_BD_sta[2] <= 0;rx_BD_sta_r[2] <= 0; 
 				rx_BD_len[2] <= 0; 
 			end
 			if (rx_BD_clr[3]) begin 
-				rx_BD_sta[3] <= 0; 
+				rx_BD_sta[3] <= 0;rx_BD_sta_r[3] <= 0; 
 				rx_BD_len[3] <= 0; 
 			end
 			if (rx_BD_clr[4]) begin 
-				rx_BD_sta[4] <= 0; 
+				rx_BD_sta[4] <= 0;rx_BD_sta_r[4] <= 0; 
 				rx_BD_len[4] <= 0; 
 			end
 			if (rx_BD_clr[5]) begin 
-				rx_BD_sta[5] <= 0; 
+				rx_BD_sta[5] <= 0;rx_BD_sta_r[5] <= 0; 
 				rx_BD_len[5] <= 0; 
 			end
 			if (rx_BD_clr[6]) begin 
-				rx_BD_sta[6] <= 0; 
+				rx_BD_sta[6] <= 0;rx_BD_sta_r[6] <= 0; 
 				rx_BD_len[6] <= 0; 
 			end
 			if (rx_BD_clr[7]) begin 
-				rx_BD_sta[7] <= 0; 
+				rx_BD_sta[7] <= 0;rx_BD_sta_r[7] <= 0; 
 				rx_BD_len[7] <= 0; 
 			end
 
@@ -566,12 +621,17 @@ localparam [ 6:0]
 			us_cnt <= 0;
 			rx_DMA_int <= 0;
 		end else begin
-			if (us_cnt == 32'd12499) begin
+			if (ENABLE_DMA) begin
+				if (us_cnt >= DMA_RX_INTERVAL) begin
+					us_cnt <= 0;
+					if (|rx_BD_sta)
+						rx_DMA_int <= 1;
+				end else 
+					us_cnt <= us_cnt + 1;			
+			end else begin
 				us_cnt <= 0;
-				if (|rx_BD_sta)
-					rx_DMA_int <= 1;
-			end else 
-				us_cnt <= us_cnt + 1;
+			end
+
 
 			if (rx_DMA_int == 1)
 				rx_DMA_int <= 0;
@@ -608,11 +668,14 @@ module mux_heap(
 	output     [31:0] CPU_heap_rdata
 );
 
+	// reg BUS_valid_m1;
 	always @(posedge clk) begin
 		if (!resetn) begin
 			// reset
 			BUS_ready <= 0;
+			// BUS_valid_m1 <= 0;
 		end else begin
+			// BUS_valid_m1 <= BUS_valid;
 			if ((BUS_valid == 1) && (CPU_heap_valid == 0)) begin
 				BUS_ready <= 1;
 			end else if (BUS_valid == 0) begin

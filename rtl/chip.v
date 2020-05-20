@@ -1,4 +1,8 @@
-module chip(
+module chip #
+(
+  parameter DMA_RX_INTERVAL = 32'd124999999,
+  parameter UART_BAUD       = 32'd271
+)(
   // input [31:0] test,
   input        FCLKIN_P,
   input        FCLKIN_N,
@@ -36,7 +40,12 @@ module chip(
 
   wire [1:0] led;
   wire _tx;
-  top _top
+  top #
+    (
+      .DMA_RX_INTERVAL (DMA_RX_INTERVAL),
+      .UART_BAUD       (UART_BAUD)
+    )
+  _top
     (
       // .test        (test),
       .clk         (CLK_OUT1),
@@ -209,7 +218,7 @@ endmodule
 
 `include "top.v"
 `include "picorv32.v"
-`include "simpleuart.v"
+// `include "simpleuart.v"
 `include "DMAC.v"
 
 `include "./eth/axis_adapter.v"
@@ -225,3 +234,8 @@ endmodule
 `include "./eth/oddr.v"
 `include "./eth/ssio_sdr_in.v"
 `include "./eth/ssio_sdr_out.v"
+
+`include "./uart/uart.v"
+`include "./uart/uart_fifo.v"
+`include "./uart/uart_top.v"
+`include "./uart/fifo.v"

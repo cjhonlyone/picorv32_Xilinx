@@ -1,5 +1,9 @@
 `timescale 1 ns / 1 ps
-module top(
+module top #
+(
+  parameter DMA_RX_INTERVAL = 32'd1249999,
+  parameter UART_BAUD       = 32'd271
+)(
     // input [31:0] test,
 
     input        clk,
@@ -19,6 +23,8 @@ module top(
     output       phy_tx_er,
     output       phy_reset_n
 );
+
+  assign phy_reset_n = (resetn == 0) ? 0 : 1;
 
   wire trap;
   wire mem_valid;
@@ -73,12 +79,10 @@ module top(
   wire        DMA_valid = mem_valid && (mem_addr >= 32'h 8000_0040) && (mem_addr < 32'h 8000_00D0);
   wire        DMA_ready;
   wire [31:0] DMA_rdata;
-  // wire        simpleuart_reg_div_sel = mem_valid && (mem_addr == 32'h 8000_0004);
-  // wire [31:0] simpleuart_reg_div_do;
 
-  wire        simpleuart_reg_dat_sel = mem_valid && (mem_addr == 32'h 8000_0008);
-  wire [31:0] simpleuart_reg_dat_do;
-  wire        simpleuart_reg_dat_wait;
+  wire        uart_valid = mem_valid && (mem_addr >= 32'h 8000_0004) && (mem_addr < 32'h 8000_000C);
+  wire        uart_ready;
+  wire [31:0] uart_rdata;
 
 
   wire        mux_heap_valid;
@@ -139,20 +143,24 @@ module top(
       (
          .clk            (clk),
          .resetn         (resetn),
+
          .mux_heap_valid (mux_heap_valid),
          .mux_heap_ready (mux_heap_ready),
          .mux_heap_addr  (mux_heap_addr),
          .mux_heap_wdata (mux_heap_wdata),
          .mux_heap_wstrb (mux_heap_wstrb),
          .mux_heap_rdata (mux_heap_rdata),
+         
          .BUS_valid      (BUS_valid),
          .BUS_ready      (BUS_ready),
+
          .DMA_heap_valid (DMA_heap_valid),
          .DMA_heap_ready (DMA_heap_ready),
          .DMA_heap_addr  (DMA_heap_addr),
          .DMA_heap_wdata (DMA_heap_wdata),
          .DMA_heap_wstrb (DMA_heap_wstrb),
          .DMA_heap_rdata (DMA_heap_rdata),
+
          .CPU_heap_valid (heap_valid),
          .CPU_heap_ready (heap_ready),
          .CPU_heap_addr  (mem_addr),
@@ -176,7 +184,9 @@ module top(
     wire tx_axis_tlast;
     wire tx_axis_tuser;
 
-   DMAC _DMAC
+   DMAC   #(
+         .DMA_RX_INTERVAL(DMA_RX_INTERVAL))
+   _DMAC
       (
          .clk            (clk),
          .resetn         (resetn),
@@ -268,35 +278,51 @@ module top(
 // 250MHz 2170
 // 200MHz 1736
 // 125MHz 1085
-  simpleuart #(.DEFAULT_DIV(32'd50))
-  uart (
-    .clk         (clk         ),
-    .resetn      (resetn      ),
+  uart_top #(
+      .CLOCK_DIVIDE(UART_BAUD)
+    ) 
+  _uart_top (
+      .clk       (clk),
+      .resetn    (resetn),
+      .mem_valid (uart_valid),
+      .mem_ready (uart_ready),
+      .mem_addr  (mem_addr),
+      .mem_wdata (mem_wdata),
+      .mem_wstrb (mem_wstrb),
+      .mem_rdata (uart_rdata),
+      .tx        (txd),
+      .rx        (rxd)
+    );
 
-    .ser_tx      (txd      ),
-    .ser_rx      (rxd      ),
+  // simpleuart #(.DEFAULT_DIV(UART_BAUD))
+  // uart (
+  //   .clk         (clk         ),
+  //   .resetn      (resetn      ),
 
-    .reg_div_we  (0),
-    // .reg_div_di  (mem_wdata),
-    // .reg_div_do  (simpleuart_reg_div_do),
+  //   .ser_tx      (txd      ),
+  //   .ser_rx      (rxd      ),
 
-    .reg_dat_we  (simpleuart_reg_dat_sel ? mem_wstrb[0] : 1'b 0),
-    .reg_dat_re  (simpleuart_reg_dat_sel && !mem_wstrb),
-    .reg_dat_di  (mem_wdata),
-    .reg_dat_do  (simpleuart_reg_dat_do),
-    .reg_dat_wait(simpleuart_reg_dat_wait)
-  );
+  //   .reg_div_we  (0),
+  //   // .reg_div_di  (mem_wdata),
+  //   // .reg_div_do  (simpleuart_reg_div_do),
 
-  assign mem_rdata = simpleuart_reg_dat_sel ? simpleuart_reg_dat_do :
+  //   .reg_dat_we  (simpleuart_reg_dat_sel ? mem_wstrb[0] : 1'b 0),
+  //   .reg_dat_re  (simpleuart_reg_dat_sel && !mem_wstrb),
+  //   .reg_dat_di  (mem_wdata),
+  //   .reg_dat_do  (simpleuart_reg_dat_do),
+  //   .reg_dat_wait(simpleuart_reg_dat_wait)
+  // );
+
+  assign mem_rdata = uart_valid ? uart_rdata :
                text_valid ? text_rdata : 
-               mux_heap_valid ? mux_heap_rdata : 
+               (!BUS_ready && mux_heap_valid) ? mux_heap_rdata : 
                DMA_valid ? DMA_rdata : 32'h 0000_0000 ;
 
   assign mem_ready = (text_valid && text_ready) || 
-                     (mux_heap_valid && mux_heap_ready) || 
+                     (!BUS_ready && mux_heap_valid && mux_heap_ready) || 
                      (io_valid && io_ready) || 
-                     (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait) ||
-                     (DMA_valid && DMA_rdata) ;
+                     (uart_valid && uart_ready) ||
+                     (DMA_valid && DMA_ready) ;
   
 endmodule
 
@@ -431,7 +457,7 @@ module bram_4k_8(
   input we,
   input en
 );
-
+  (* ram_style = "block" *)
   reg [7:0] mem[0:4095];
   reg [11:0] addr1;
 
