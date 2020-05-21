@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -33,6 +33,11 @@
 #define __LWIP_SYS_H__
 
 #include "lwip/opt.h"
+#if defined (__arm__) || defined (__aarch64__)
+#include "xpseudo_asm.h"
+#include "xil_exception.h"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,7 +86,7 @@ typedef u32_t sys_prot_t;
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
-#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
+#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
 #include "lwip/err.h"
 #include "arch/sys_arch.h"
@@ -120,7 +125,7 @@ void sys_mutex_lock(sys_mutex_t *mutex);
 void sys_mutex_unlock(sys_mutex_t *mutex);
 /** Delete a semaphore
  * @param mutex the mutex to delete */
-void sys_mutex_free(sys_mutex_t *mutex); 
+void sys_mutex_free(sys_mutex_t *mutex);
 #ifndef sys_mutex_valid
 /** Check if a mutex is valid/allocated: return 1 for valid, 0 for invalid */
 int sys_mutex_valid(sys_mutex_t *mutex);
@@ -266,7 +271,19 @@ u32_t sys_now(void);
  * which should be implemented in sys_arch.c. If a particular port needs a
  * different implementation, then this macro may be defined in sys_arch.h
  */
+ #ifdef __MICROBLAZE__
+#define SYS_ARCH_PROTECT(lev) lev = mfmsr(); \
+			      mtmsr(lev & ~0x2)
+#endif
+#ifdef __PPC__
+#define SYS_ARCH_PROTECT(lev) lev = mfmsr(); \
+			      mtmsr(lev & ~XEXC_ALL)
+#endif
+#if defined (__arm__) || defined (__aarch64__)
 #define SYS_ARCH_PROTECT(lev) lev = sys_arch_protect()
+#endif
+
+
 /** SYS_ARCH_UNPROTECT
  * Perform a "fast" set of the protection level to "lev". This could be
  * implemented by setting the interrupt level to "lev" within the MACRO or by
@@ -275,7 +292,15 @@ u32_t sys_now(void);
  * sys_arch.c. If a particular port needs a different implementation, then
  * this macro may be defined in sys_arch.h
  */
+ #ifdef __MICROBLAZE__
+#define SYS_ARCH_UNPROTECT(lev)	mtmsr(lev)
+#endif
+#ifdef __PPC__
+#define SYS_ARCH_UNPROTECT(lev)	mtmsr(lev)
+#endif
+#if defined (__arm__) || defined (__aarch64__)
 #define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
+#endif
 sys_prot_t sys_arch_protect(void);
 void sys_arch_unprotect(sys_prot_t pval);
 

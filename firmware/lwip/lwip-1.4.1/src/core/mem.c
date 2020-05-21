@@ -64,7 +64,7 @@
 #include "lwip/err.h"
 
 #include <string.h>
-
+#undef MEM_USE_POOLS
 #if MEM_USE_POOLS
 /* lwIP head implemented with different sized pools */
 
@@ -471,7 +471,7 @@ mem_trim(void *rmem, mem_size_t newsize)
   /* else {
     next struct mem is used but size between mem and mem2 is not big enough
     to create another struct mem
-    -> don't do anyhting. 
+    -> don't do anyhting.
     -> the remaining space stays unused since it is too small
   } */
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT

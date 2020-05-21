@@ -6,9 +6,9 @@
 
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -17,21 +17,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -58,6 +58,10 @@
 #include "netif/etharp.h"
 #include "lwip/api.h"
 
+#if !NO_SYS
+#include "lwip/tcpip.h"
+#endif
+
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
  */
@@ -66,6 +70,9 @@
 #endif
 #if (!IP_SOF_BROADCAST && IP_SOF_BROADCAST_RECV)
   #error "If you want to use broadcast filter per pcb on recv operations, you have to define IP_SOF_BROADCAST=1 in your lwipopts.h"
+#endif
+#if (!LWIP_ARP && ARP_QUEUEING)
+  #error "If you want to use ARP Queueing, you have to define LWIP_ARP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_UDPLITE)
   #error "If you want to use UDP Lite, you have to define LWIP_UDP=1 in your lwipopts.h"
@@ -163,6 +170,9 @@
 #if (PBUF_POOL_BUFSIZE <= MEM_ALIGNMENT)
   #error "PBUF_POOL_BUFSIZE must be greater than MEM_ALIGNMENT or the offset may take the full first pbuf"
 #endif
+#if (TCP_QUEUE_OOSEQ && !LWIP_TCP)
+  #error "TCP_QUEUE_OOSEQ requires LWIP_TCP"
+#endif
 #if (DNS_LOCAL_HOSTLIST && !DNS_LOCAL_HOSTLIST_IS_DYNAMIC && !(defined(DNS_LOCAL_HOSTLIST_INIT)))
   #error "you have to define define DNS_LOCAL_HOSTLIST_INIT {{'host1', 0x123}, {'host2', 0x234}} to initialize DNS_LOCAL_HOSTLIST"
 #endif
@@ -191,7 +201,7 @@
 #if NETCONN_MORE != TCP_WRITE_FLAG_MORE
   #error "NETCONN_MORE != TCP_WRITE_FLAG_MORE"
 #endif
-#endif /* LWIP_NETCONN && LWIP_TCP */ 
+#endif /* LWIP_NETCONN && LWIP_TCP */
 #if LWIP_SOCKET
 /* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
 #if SO_ACCEPTCONN != SOF_ACCEPTCONN
@@ -282,9 +292,30 @@
 #endif /* LWIP_TCP */
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
+
+#if !NO_SYS
+void tcpip_init_done(void *p)
+{
+	*((unsigned int *)p) = 1;
+}
+
+void
+lwip_sock_init()
+{
+    volatile unsigned tcpip_init_done_signal = 0;
+
+    tcpip_init(tcpip_init_done, (void *)&tcpip_init_done_signal);
+
+    /* wait until tcpip initialization is complete */
+    while (!tcpip_init_done_signal)
+        ;
+}
+#endif
 /**
  * Perform Sanity check of user-configurable values, and initialize all modules.
  */
+
+
 void
 lwip_init(void)
 {
@@ -329,4 +360,14 @@ lwip_init(void)
 #if LWIP_TIMERS
   sys_timeouts_init();
 #endif /* LWIP_TIMERS */
+
+#if !NO_SYS
+  /* in the Xilinx lwIP 1.2.0 port, lwip_init() was added as a convenience utility function
+     to initialize all the lwIP layers. lwIP 1.3.0 introduced lwip_init() in the base lwIP
+     itself. However a user cannot use lwip_init() regardless of whether it is raw or socket
+     modes. The following call to lwip_sock_init() is made to make sure that lwIP is properly
+     initialized in both raw & socket modes with just a call to lwip_init().
+   */
+  lwip_sock_init();
+#endif
 }

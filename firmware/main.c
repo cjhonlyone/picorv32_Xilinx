@@ -3,14 +3,45 @@
 #include "riscvdma.h"
 #include "riscvnetif.h"
 
-#include "lwip/tcp.h"
+// #include "lwip/tcp.h"
+#include "lwip/udp.h"
 
-
-int start_application();
+// int start_tcp_application();
+// int start_udp_application();
 // void tcp_fasttmr(void);
 // void tcp_slowtmr(void);
 
 // void lwip_init();
+// Define port to listen on
+#define FF_UDP_PORT 7
+
+// TIMEOUT FOR DMA AND GMM WAIT
+#define RESET_TIMEOUT_COUNTER	10000
+
+// DEFINES
+#define WAVE_SIZE_BYTES    512  // Number of samples in waveform
+#define INDARR_SIZE_BYTES  1024 // Number of bytes required to hold 512 fixed point floats
+
+//HARDWARE DEFINES
+#define NUMCHANNELS 		2	// Number of parallel operations done on input stream (1 OR 2)
+#define BW   				32	// Total number of bits in fixed point data type
+#define IW    				24	// Number of bits left of decimal point in fixed point data type
+#define BITDIV			 256.0 	// Divisor to shift fixed point to int and back to float
+
+int			Centroid;
+
+// Global variables for data flow
+volatile u8_t      IndArrDone;
+volatile u32_t	EthBytesReceived;
+int*			IndArrPtr;
+volatile u8_t	SendResults;
+volatile u8_t   	DMA_TX_Busy;
+volatile u8_t	Error;
+
+// Global Variables for Ethernet handling
+u16_t    	RemotePort;
+struct ip_addr  	RemoteAddr;
+struct udp_pcb 	send_pcb;
 
 static unsigned int timer_irq_count = 0;
 
@@ -25,10 +56,15 @@ void delay(int m)
   for (i=0; i<m; i++) {
     asm volatile("nop"); } }
 
-volatile u32_t *tx_BD_sta_ptr_t = 0x800000CC;;
+volatile u32_t *tx_BD_sta_ptr_t = 0x800000CC;
+	struct pbuf * psnd;
+		struct ip_addr ipaddr, netmask, gw;
+		static struct udp_pcb *udpecho_raw_pcb;
+		void udpecho_raw_init(void);
 int main()
 { 
 
+	err_t udpsenderr;
 	// for (int j = 0;j < 8000;j++)
 	// {
 	// 	delay(1000);
@@ -99,7 +135,7 @@ int main()
 
 
 
-	struct ip_addr ipaddr, netmask, gw;
+
 
 	/* the mac address of the board. this should be unique per board */
 	unsigned char mac_ethernet_address[] =
@@ -123,8 +159,9 @@ int main()
 	netif_set_up(echo_netif);
 
 	/* start the application (web server, rxtest, txtest, etc..) */
-	start_application();
-
+	// start_tcp_application();
+	// start_udp_application();
+	udpecho_raw_init();
 	
 	/* receive and process packets */
 
@@ -137,103 +174,222 @@ int main()
 		if (timer_irq_count == 1)
 		{
 			timer_irq_count = 0;
-			tcp_tmr();
+			// SendResults ++;
+			// tcp_tmr();
 		}
 		// for (int j = 0;j < 1000;j++)
 		// {
 		// 	delay(1000);
 		// }
 		ethernetif_input(echo_netif);
-		// printf("time_ %d\n\n",time());
+
+		// if (SendResults == 1){
+
+		// 	SendResults = 0;
+		// 	// Read the results from the FPGA
+		// 	Centroid = 0xA5;
+
+		// 	// Send out the centroid result over UDP
+		// 	psnd = pbuf_alloc(PBUF_TRANSPORT, sizeof(int), PBUF_REF);
+		// 	psnd->payload = &Centroid;
+		// 	udpsenderr = udp_sendto(&send_pcb, psnd, &RemoteAddr, RemotePort);
+		// 	// printf(".");
+		// 	if (udpsenderr != ERR_OK){
+		// 		printf("UDP Send failed with Error %d\n\r", udpsenderr);
+		// 		// goto ErrorOrDone;
+		// 	}
+		// 	pbuf_free(psnd);
+		// }
 	}
   
 }
 
-err_t recv_callback(void *arg, struct tcp_pcb *tpcb,
-                               struct pbuf *p, err_t err)
+// err_t tcp_recv_callback(void *arg, struct tcp_pcb *tpcb,
+//                                struct pbuf *p, err_t err)
+// {
+// 	/* do not read the packet if we are not in ESTABLISHED state */
+// 	if (!p) {
+// 		tcp_close(tpcb);
+// 		tcp_recv(tpcb, NULL);
+// 		return ERR_OK;
+// 	}
+
+// 	/* indicate that the packet has been received */
+// 	tcp_recved(tpcb, p->len);
+
+// 	/* echo back the payload */
+// 	/* in this case, we assume that the payload is < TCP_SND_BUF */
+// 	if (tcp_sndbuf(tpcb) > p->len) {
+// 		err = tcp_write(tpcb, p->payload, p->len, 1);
+// 	} else
+// 		printf("no space in tcp_sndbuf\n\r");
+
+// 	/* free the received pbuf */
+// 	pbuf_free(p);
+
+// 	return ERR_OK;
+// }
+
+// err_t tcp_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
+// {
+// 	static int connection = 1;
+
+// 	/* set the receive callback for this connection */
+// 	tcp_recv(newpcb, tcp_recv_callback);
+// 	printf("accept_callback tcp_recv");
+
+// 	 // just use an integer number indicating the connection id as the
+// 	 //   callback argument 
+// 	tcp_arg(newpcb, (void*)connection);
+
+// 	printf("accept_callback tcp_arg");
+
+// 	/* increment for subsequent accepted connections */
+// 	connection++;
+
+// 	return ERR_OK;
+// }
+
+
+// int start_tcp_application()
+// {
+// 	struct tcp_pcb *pcb;
+// 	err_t err;
+// 	unsigned port = 7;
+
+// 	/* create new TCP PCB structure */
+// 	pcb = tcp_new();
+// 	if (!pcb) {
+// 		printf("Error creating PCB. Out of Memory\n\r");
+// 		return -1;
+// 	}
+
+// 	/* bind to specified @port */
+// 	err = tcp_bind(pcb, IP_ADDR_ANY, port);
+// 	if (err != ERR_OK) {
+// 		printf("Unable to bind to port %d: err = %d\n\r", port, err);
+// 		return -2;
+// 	}
+
+// 	/* we do not need any arguments to callback functions */
+// 	tcp_arg(pcb, NULL);
+
+// 	/* listen for connections */
+// 	pcb = tcp_listen(pcb);
+// 	if (!pcb) {
+// 		printf("Out of memory while tcp_listen\n\r");
+// 		return -3;
+// 	}
+
+// 	/* specify callback to use for incoming connections */
+// 	tcp_accept(pcb, tcp_accept_callback);
+
+// 	printf("TCP echo server started @ port %d\n\r", port);
+
+// 	return 0;
+// }
+
+
+
+// void udp_recv_callback(void *arg, struct udp_pcb *upcb,
+//                               struct pbuf *p, struct ip_addr *addr, u16_t port)
+// {
+
+// 	// Set up a timeout counter and a status variable
+// 	//int TimeOutCntr = 0;
+// 	//int status = 0;
+
+// 	/* Do not read the packet if we are not in ESTABLISHED state */
+// 	if (!p) {
+// 		udp_disconnect(upcb);
+// 		return;
+// 	}
+
+// 	/* Assign the Remote IP:port from the callback on each first pulse */
+// 	RemotePort = port;
+// 	RemoteAddr = *addr;
+
+// 	/* Keep track of the control block so we can send data back in the main while loop */
+// 	send_pcb = *upcb;
+
+// 	/********************** WAVE ARRAY ********************************/
+// 	// Determine the number of bytes received and copy this segment to the temp array
+// 	EthBytesReceived = p->len;
+// 	printf("port %d Data len = %d 0x%0x\n",port,  p->len , *(u32_t *)p->payload);
+// 	//memcpy(&WaveformArr[0], (u32*)p->payload, EthBytesReceived);
+
+// 	psnd = pbuf_alloc(PBUF_TRANSPORT, p->len, PBUF_REF);
+// 	psnd->payload = p->payload;
+// 	psnd->len = p->len;
+// 	udp_sendto(upcb, psnd, addr, port);
+// 	pbuf_free(psnd);
+// 	// SendResults = 1;
+// 	/* free the received pbuf */
+// 	pbuf_free(p);
+// 	return;
+
+// }
+
+// int start_udp_application()
+// {
+// 	struct udp_pcb *pcb;
+// 	err_t err;
+// 	unsigned port = FF_UDP_PORT;
+
+// 	/* create new UDP PCB structure */
+// 	pcb = udp_new();
+// 	if (!pcb) {
+// 		printf("Error creating PCB. Out of Memory\n\r");
+// 		return -1;
+// 	}
+
+// 	/* bind to specified @port */
+// 	err = udp_bind(pcb, &ipaddr, port);
+// 	if (err != ERR_OK) {
+// 		printf("Unable to bind to port %d: err = %d\n\r", port, err);
+// 		return -2;
+// 	}
+
+// 	/* specify callback to use for incoming connections */
+// 	udp_recv(pcb, udp_recv_callback, NULL);
+
+// 	printf("UDP echo server started @ port %d\n\r", port);
+
+// 	return 0;
+// }
+
+
+static void
+udpecho_raw_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p,
+                 const ip_addr_t *addr, u16_t port)
 {
-	/* do not read the packet if we are not in ESTABLISHED state */
-	if (!p) {
-		tcp_close(tpcb);
-		tcp_recv(tpcb, NULL);
-		return ERR_OK;
-	}
-
-	/* indicate that the packet has been received */
-	tcp_recved(tpcb, p->len);
-
-	/* echo back the payload */
-	/* in this case, we assume that the payload is < TCP_SND_BUF */
-	if (tcp_sndbuf(tpcb) > p->len) {
-		err = tcp_write(tpcb, p->payload, p->len, 1);
-	} else
-		printf("no space in tcp_sndbuf\n\r");
-
-	/* free the received pbuf */
-	pbuf_free(p);
-
-	return ERR_OK;
+  LWIP_UNUSED_ARG(arg);
+  if (p != NULL) {
+    /* send received packet back to sender */
+    udp_sendto(upcb, p, addr, port);
+    /* free the pbuf */
+    pbuf_free(p);
+  }
 }
 
-err_t accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
+void
+udpecho_raw_init(void)
 {
-	static int connection = 1;
+  // udpecho_raw_pcb = udp_new_ip_type(IPADDR_ANY);
+  udpecho_raw_pcb = udp_new();
+  if (udpecho_raw_pcb != NULL) {
+    err_t err;
 
-	/* set the receive callback for this connection */
-	tcp_recv(newpcb, recv_callback);
-
-	/* just use an integer number indicating the connection id as the
-	   callback argument */
-	tcp_arg(newpcb, (void*)connection);
-
-	/* increment for subsequent accepted connections */
-	connection++;
-
-	return ERR_OK;
+    err = udp_bind(udpecho_raw_pcb, IP_ADDR_ANY, 7);
+    if (err == ERR_OK) {
+      udp_recv(udpecho_raw_pcb, udpecho_raw_recv, NULL);
+    } else {
+      /* abort? output diagnostic? */
+    }
+  } else {
+    /* abort? output diagnostic? */
+  }
 }
-
-
-int start_application()
-{
-	struct tcp_pcb *pcb;
-	err_t err;
-	unsigned port = 7;
-
-	/* create new TCP PCB structure */
-	pcb = tcp_new();
-	if (!pcb) {
-		printf("Error creating PCB. Out of Memory\n\r");
-		return -1;
-	}
-
-	/* bind to specified @port */
-	err = tcp_bind(pcb, IP_ADDR_ANY, port);
-	if (err != ERR_OK) {
-		printf("Unable to bind to port %d: err = %d\n\r", port, err);
-		return -2;
-	}
-
-	/* we do not need any arguments to callback functions */
-	tcp_arg(pcb, NULL);
-
-	/* listen for connections */
-	pcb = tcp_listen(pcb);
-	if (!pcb) {
-		printf("Out of memory while tcp_listen\n\r");
-		return -3;
-	}
-
-	/* specify callback to use for incoming connections */
-	tcp_accept(pcb, accept_callback);
-
-	printf("TCP echo server started @ port %d\n\r", port);
-
-	return 0;
-}
-
-
-
-
 // #include "mylib.h"
 // // #include "dma.h"
 

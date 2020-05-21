@@ -39,7 +39,7 @@
  *
  */
 
-#include "lwip/opt.h"
+#include "lwipopts.h"
 
 #include "lwip/timers.h"
 #include "lwip/tcp_impl.h"
@@ -58,6 +58,8 @@
 #include "lwip/dns.h"
 #include "lwip/sys.h"
 #include "lwip/pbuf.h"
+
+#include"lwipopts.h"
 
 
 /** The one and only timeout list */
