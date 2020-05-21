@@ -33,7 +33,7 @@
 // #include <stdlib.h>
 
 #include "pqueue.h"
-
+// #include "mylib.h"
 
 #define NUM_QUEUES	2
 
@@ -71,6 +71,8 @@ pq_enqueue(pq_queue_t *q, void *p, int idx)
 	q->head = (q->head + 1)%PQ_QUEUE_SIZE;
 	q->len++;
 
+// printf("pq_en *p %0x, idx %02x, head %d, len %d\n", (void*)p, idx, q->head, q->len);
+
 	return 0;
 }
 
@@ -81,7 +83,7 @@ pq_dequeue(pq_queue_t *q)
 
 	if (q->len == 0)
 		return ((void *)0);
-
+// printf("pq_de *p %0x\n", (void*)q->data[q->tail]);
 	// ptail = q->tail;
 	return q->data[q->tail];
 }
@@ -97,6 +99,7 @@ pq_qindex(pq_queue_t *q)
 
 	q->tail = (q->tail + 1)%PQ_QUEUE_SIZE;
 	q->len--;
+// printf("pq_qi idx %02x, head %d, len %d\n", pidx, q->tail, q->len);
 	return pidx;
 }
 

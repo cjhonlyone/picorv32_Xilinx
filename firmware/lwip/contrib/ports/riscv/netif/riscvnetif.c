@@ -67,7 +67,7 @@
 volatile u32_t *tx_BD_sta_ptr = 0x800000CC;;
 
 
-
+extern void* dma_bd_pbuf[8];
 
 // struct ethernetif {
 //   struct eth_addr *ethaddr;
@@ -99,20 +99,24 @@ low_level_init(struct netif *netif)
   netif->hwaddr_len = NETIF_MAX_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = 0xaa;
-  netif->hwaddr[1] = 0xbb;
-  netif->hwaddr[2] = 0xcc;
-  netif->hwaddr[3] = 0xdd;
-  netif->hwaddr[4] = 0xee;
-  netif->hwaddr[5] = 0xff;
-
+  netif->hwaddr[0] = 0x00;
+  netif->hwaddr[1] = 0x0a;
+  netif->hwaddr[2] = 0x35;
+  netif->hwaddr[3] = 0x00;
+  netif->hwaddr[4] = 0x01;
+  netif->hwaddr[5] = 0x02;
+// eth.addr == 00:0a:35:00:01:02
   /* maximum transfer unit */
-  netif->mtu = 1024;
+  netif->mtu = TCP_MSS;
 
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST  | NETIF_FLAG_ETHARP|NETIF_FLAG_LINK_UP;// NETIF_FLAG_ETHARP
   
+#if LWIP_IGMP
+  netif->flags |= NETIF_FLAG_IGMP;
+#endif
+
   mymac_s->send_q = NULL;
   mymac_s->recv_q = pq_create_queue();
 
@@ -142,17 +146,30 @@ static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
   struct pbuf *q;
+  struct eth_hdr *ethhdr;
 
   for (q = p; q != NULL; q = q->next) {
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
-    tx_BD_adr_0 = (u32_t *)q->payload;
+    ethhdr = q->payload;
+  LWIP_DEBUGF(NETIF_DEBUG,
+    ("low_level_output: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
+     (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],
+     (unsigned)ethhdr->dest.addr[3], (unsigned)ethhdr->dest.addr[4], (unsigned)ethhdr->dest.addr[5],
+     (unsigned)ethhdr->src.addr[0], (unsigned)ethhdr->src.addr[1], (unsigned)ethhdr->src.addr[2],
+     (unsigned)ethhdr->src.addr[3], (unsigned)ethhdr->src.addr[4], (unsigned)ethhdr->src.addr[5],
+     (unsigned)htons(ethhdr->type)));
+  
+    // LWIP_DEBUGF(NETIF_DEBUG, ("low_level_output q 0x%0x payload 0x%0x len %d\n", (void*)q,
+    //     (u32_t *)q->payload, q->len));
+    tx_BD_adr_0 = q->payload;
     tx_BD_len_0 = q->len;
 
-    *(u32_t*)tx_BD_sta_ptr = 1;
-    asm volatile("nop");
-    while(*(u32_t*)tx_BD_sta_ptr == 1);
+    tx_BD_sta = 1;
+    while(tx_BD_sta ==  1);
+    LWIP_DEBUGF(NETIF_DEBUG, ("low_level_output q 0x%0x payload 0x%0x len %d\n", (void*)q,
+        (u32_t *)q->payload, q->len));
     }
 
   return ERR_OK;
@@ -196,6 +213,7 @@ ethernetif_input(struct netif *netif)
   mymac *mymac_s = (mymac *)(netif->state);
   struct eth_hdr *ethhdr;
   struct pbuf *p;
+  u32_t i,j,k;
 
   // while (1)
   // {
@@ -209,29 +227,64 @@ ethernetif_input(struct netif *netif)
     }
 
     /* points to packet payload, which starts with an Ethernet header */
-    // ethhdr = p->payload;
 
-    // LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+    // LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input input\n"));
+  ethhdr = (struct eth_hdr *)p->payload;
+  // LWIP_DEBUGF(NETIF_DEBUG, ("p->payload 0x%0x 0x%0x 0x%0x 0x%0x\n", 
+  //   *((u32_t*)(p->payload)), *((u32_t*)(p->payload) + 1), 
+  //   *((u32_t*)(p->payload) + 2), *((u32_t*)(p->payload)) + 3));
+  // LWIP_DEBUGF(NETIF_DEBUG,
+  //   ("ethernetif_input: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
+  //    (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],
+  //    (unsigned)ethhdr->dest.addr[3], (unsigned)ethhdr->dest.addr[4], (unsigned)ethhdr->dest.addr[5],
+  //    (unsigned)ethhdr->src.addr[0], (unsigned)ethhdr->src.addr[1], (unsigned)ethhdr->src.addr[2],
+  //    (unsigned)ethhdr->src.addr[3], (unsigned)ethhdr->src.addr[4], (unsigned)ethhdr->src.addr[5],
+  //    (unsigned)htons(ethhdr->type)));
 
-    // switch (htons(ethhdr->type)) {
+    switch (htons(ethhdr->type)) {
       /* IP or ARP packet? */
-      // case ETHTYPE_IP:
-      // case ETHTYPE_ARP:
+      case ETHTYPE_IP:
+      case ETHTYPE_ARP:
         /* full packet send to tcpip_thread to process */
         if (netif->input(p, netif) != ERR_OK) {
           LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
           pbuf_free(p);
           p = NULL;
         }
-        // break;
+        break;
 
-      // default:
-        // pbuf_free(p);
-        // p = NULL;
-        // break;
-    // }
+      default:
+        pbuf_free(p);
+        p = NULL;
+        break;
+    }
 
-    rx_BD_clr = pq_qindex(mymac_s->recv_q);
+    p = pbuf_alloc(PBUF_RAW, 1500, PBUF_POOL);
+    if (p == NULL)
+    {
+     printf("\ndma pbuf_alloc fall\n");
+     return 0;
+    }
+
+    
+    k = pq_qindex(mymac_s->recv_q);
+
+    j = k;
+
+    for (i = 0;i<8;i++)
+    {
+      if ((k & 0x00000001) == 0x00000001)
+        break;
+      else
+        k = k >> 1;
+    }
+    dma_bd_pbuf[i] = (void *)p;
+    *((u32_t *)(rx_BD_adr + (i << 2))) = (u32_t *)(p->payload);
+    rx_BD_clr = j;
+
+    // LWIP_DEBUGF(NETIF_DEBUG, ("bd_pbuf[%d] = 0x%0x payload 0x%0x ethernetif_input\n\n",
+    //   i, p, p->payload));
+
   // }
 
   return 1;

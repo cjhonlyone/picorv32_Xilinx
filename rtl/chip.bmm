@@ -1,4 +1,4 @@
-ADDRESS_SPACE RISCV RAMB32 [0x00000000:0x0001FFFF]
+ADDRESS_SPACE RISCV RAMB32 [0x00000000:0x0003FFFF]
     BUS_BLOCK
         _top/_text_RAM/_ram_4k_32_0/_bram0/Mram_mem [7:0] ;
         _top/_text_RAM/_ram_4k_32_0/_bram1/Mram_mem [15:8] ;
@@ -24,6 +24,31 @@ ADDRESS_SPACE RISCV RAMB32 [0x00000000:0x0001FFFF]
         _top/_text_RAM/_ram_4k_32_3/_bram3/Mram_mem [31:24] ;
     END_BUS_BLOCK;
     BUS_BLOCK
+        _top/_text_RAM/_ram_4k_32_4/_bram0/Mram_mem [7:0] ;
+        _top/_text_RAM/_ram_4k_32_4/_bram1/Mram_mem [15:8] ;
+        _top/_text_RAM/_ram_4k_32_4/_bram2/Mram_mem [23:16] ;
+        _top/_text_RAM/_ram_4k_32_4/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_text_RAM/_ram_4k_32_5/_bram0/Mram_mem [7:0] ;
+        _top/_text_RAM/_ram_4k_32_5/_bram1/Mram_mem [15:8] ;
+        _top/_text_RAM/_ram_4k_32_5/_bram2/Mram_mem [23:16] ;
+        _top/_text_RAM/_ram_4k_32_5/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_text_RAM/_ram_4k_32_6/_bram0/Mram_mem [7:0] ;
+        _top/_text_RAM/_ram_4k_32_6/_bram1/Mram_mem [15:8] ;
+        _top/_text_RAM/_ram_4k_32_6/_bram2/Mram_mem [23:16] ;
+        _top/_text_RAM/_ram_4k_32_6/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_text_RAM/_ram_4k_32_7/_bram0/Mram_mem [7:0] ;
+        _top/_text_RAM/_ram_4k_32_7/_bram1/Mram_mem [15:8] ;
+        _top/_text_RAM/_ram_4k_32_7/_bram2/Mram_mem [23:16] ;
+        _top/_text_RAM/_ram_4k_32_7/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+
+    BUS_BLOCK
         _top/_heap_RAM/_ram_4k_32_0/_bram0/Mram_mem [7:0] ;
         _top/_heap_RAM/_ram_4k_32_0/_bram1/Mram_mem [15:8] ;
         _top/_heap_RAM/_ram_4k_32_0/_bram2/Mram_mem [23:16] ;
@@ -46,5 +71,29 @@ ADDRESS_SPACE RISCV RAMB32 [0x00000000:0x0001FFFF]
         _top/_heap_RAM/_ram_4k_32_3/_bram1/Mram_mem [15:8] ;
         _top/_heap_RAM/_ram_4k_32_3/_bram2/Mram_mem [23:16] ;
         _top/_heap_RAM/_ram_4k_32_3/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_heap_RAM/_ram_4k_32_4/_bram0/Mram_mem [7:0] ;
+        _top/_heap_RAM/_ram_4k_32_4/_bram1/Mram_mem [15:8] ;
+        _top/_heap_RAM/_ram_4k_32_4/_bram2/Mram_mem [23:16] ;
+        _top/_heap_RAM/_ram_4k_32_4/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_heap_RAM/_ram_4k_32_5/_bram0/Mram_mem [7:0] ;
+        _top/_heap_RAM/_ram_4k_32_5/_bram1/Mram_mem [15:8] ;
+        _top/_heap_RAM/_ram_4k_32_5/_bram2/Mram_mem [23:16] ;
+        _top/_heap_RAM/_ram_4k_32_5/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_heap_RAM/_ram_4k_32_6/_bram0/Mram_mem [7:0] ;
+        _top/_heap_RAM/_ram_4k_32_6/_bram1/Mram_mem [15:8] ;
+        _top/_heap_RAM/_ram_4k_32_6/_bram2/Mram_mem [23:16] ;
+        _top/_heap_RAM/_ram_4k_32_6/_bram3/Mram_mem [31:24] ;
+    END_BUS_BLOCK;
+    BUS_BLOCK
+        _top/_heap_RAM/_ram_4k_32_7/_bram0/Mram_mem [7:0] ;
+        _top/_heap_RAM/_ram_4k_32_7/_bram1/Mram_mem [15:8] ;
+        _top/_heap_RAM/_ram_4k_32_7/_bram2/Mram_mem [23:16] ;
+        _top/_heap_RAM/_ram_4k_32_7/_bram3/Mram_mem [31:24] ;
     END_BUS_BLOCK;
 END_ADDRESS_SPACE;

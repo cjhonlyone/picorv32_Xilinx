@@ -7,12 +7,12 @@
 
 
 int start_application();
-void tcp_fasttmr(void);
-void tcp_slowtmr(void);
+// void tcp_fasttmr(void);
+// void tcp_slowtmr(void);
 
-void lwip_init();
+// void lwip_init();
 
-
+static unsigned int timer_irq_count = 0;
 
 // struct netif echo_netif_t;
 // struct mymac mymac_s_t;
@@ -25,9 +25,79 @@ void delay(int m)
   for (i=0; i<m; i++) {
     asm volatile("nop"); } }
 
-
+volatile u32_t *tx_BD_sta_ptr_t = 0x800000CC;;
 int main()
 { 
+
+	// for (int j = 0;j < 8000;j++)
+	// {
+	// 	delay(1000);
+	// }
+	// printf("\n\n\nsystem boot.......................\n\n\n");
+	// ENABLE_DMA = 1;
+
+	// *(uint32_t*)(0x20220) =    0xffffffff;
+	// *(uint32_t*)(0x20220+4) =  0x0a00ffff;
+	// *(uint32_t*)(0x20220+8) =  0x02010035;
+	// *(uint32_t*)(0x20220+12) = 0x01000608;
+	// *(uint32_t*)(0x20220+16) = 0x04060008;
+	// *(uint32_t*)(0x20220+20) = 0x0a000100;
+	// *(uint32_t*)(0x20220+24) = 0x02010035;
+	// *(uint32_t*)(0x20220+28) = 0x0a01a8c0;
+	// *(uint32_t*)(0x20220+32) = 0x00000000;
+	// *(uint32_t*)(0x20220+36) = 0xa8c00000;
+	// *(uint32_t*)(0x20220+40) = 0x00000a01;
+
+	// *(uint32_t*)(0x20220+44) = 0xbda16844;
+	// *(uint32_t*)(0x20220+48) = 0xbda16848;
+	// *(uint32_t*)(0x20220+52) = 0xbda16852;
+	// *(uint32_t*)(0x20220+56) = 0xbda16856;
+
+ //    tx_BD_adr_0 = 0x20220;
+ //    tx_BD_len_0 = 96;
+
+	for (int j = 0;j < 8000;j++)
+	{
+		delay(4000);
+	}
+
+//     *((u32_t volatile *)0x800000CC) = 1;
+//     asm volatile("nop");
+//     while(*((u32_t volatile *)0x800000CC) == 1);
+//     asm volatile("nop");
+//     printf("first send %d\n", *((u32_t*)0x800000CC));
+
+
+//     *((u32_t volatile *)0x800000CC) = 1;
+//     asm volatile("nop");
+//     while(*((u32_t volatile *)0x800000CC) == 1);
+// printf("s send %d\n", *((u32_t volatile *)0x800000CC));
+
+//     while(1);
+
+ //    tx_BD_adr_0 = 0x20221;
+ //    tx_BD_len_0 = 58;
+
+ //    *(u32_t*)tx_BD_sta_ptr_t = 1;
+ //    asm volatile("nop");
+ //    while(*(u32_t*)tx_BD_sta_ptr_t == 1);
+
+ //    tx_BD_adr_0 = 0x20222;
+ //    tx_BD_len_0 = 58;
+
+ //    *(u32_t*)tx_BD_sta_ptr_t = 1;
+ //    asm volatile("nop");
+ //    while(*(u32_t*)tx_BD_sta_ptr_t == 1);
+
+ //    tx_BD_adr_0 = 0x20223;
+ //    tx_BD_len_0 = 58;
+
+ //    *(u32_t*)tx_BD_sta_ptr_t = 1;
+ //    asm volatile("nop");
+ //    while(*(u32_t*)tx_BD_sta_ptr_t == 1);
+
+
+
 
 	struct ip_addr ipaddr, netmask, gw;
 
@@ -55,26 +125,24 @@ int main()
 	/* start the application (web server, rxtest, txtest, etc..) */
 	start_application();
 
+	
 	/* receive and process packets */
 
 	long time_ = time();
+	enable_timer(31200000);
 	
 	uint32_t kk = 0;
 
 	while (1) {
-		if ((time() - time_) >= 31250000)
+		if (timer_irq_count == 1)
 		{
-			tcp_fasttmr();
-			kk ++;
-			time_ = time();
+			timer_irq_count = 0;
+			tcp_tmr();
 		}
-		if (kk == 2)
-		{
-			tcp_slowtmr();
-			kk=0;
-			// printf("time_ %d\n\n",time());
-
-		}
+		// for (int j = 0;j < 1000;j++)
+		// {
+		// 	delay(1000);
+		// }
 		ethernetif_input(echo_netif);
 		// printf("time_ %d\n\n",time());
 	}
@@ -99,7 +167,7 @@ err_t recv_callback(void *arg, struct tcp_pcb *tpcb,
 	if (tcp_sndbuf(tpcb) > p->len) {
 		err = tcp_write(tpcb, p->payload, p->len, 1);
 	} else
-		// xil_printf("no space in tcp_sndbuf\n\r");
+		printf("no space in tcp_sndbuf\n\r");
 
 	/* free the received pbuf */
 	pbuf_free(p);
@@ -134,14 +202,14 @@ int start_application()
 	/* create new TCP PCB structure */
 	pcb = tcp_new();
 	if (!pcb) {
-		// xil_printf("Error creating PCB. Out of Memory\n\r");
+		printf("Error creating PCB. Out of Memory\n\r");
 		return -1;
 	}
 
 	/* bind to specified @port */
 	err = tcp_bind(pcb, IP_ADDR_ANY, port);
 	if (err != ERR_OK) {
-		// xil_printf("Unable to bind to port %d: err = %d\n\r", port, err);
+		printf("Unable to bind to port %d: err = %d\n\r", port, err);
 		return -2;
 	}
 
@@ -151,14 +219,14 @@ int start_application()
 	/* listen for connections */
 	pcb = tcp_listen(pcb);
 	if (!pcb) {
-		// xil_printf("Out of memory while tcp_listen\n\r");
+		printf("Out of memory while tcp_listen\n\r");
 		return -3;
 	}
 
 	/* specify callback to use for incoming connections */
 	tcp_accept(pcb, accept_callback);
 
-	// xil_printf("TCP echo server started @ port %d\n\r", port);
+	printf("TCP echo server started @ port %d\n\r", port);
 
 	return 0;
 }
@@ -191,21 +259,74 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 {
 	// static unsigned int ext_irq_4_count = 0;
 	// static unsigned int ext_irq_5_count = 0;
-	static unsigned int timer_irq_count = 0;
+	
 	// printf("irq\n");
 
 	if ((irqs & (1<<5)) != 0) {
 		dma_rx_irq(echo_netif);
-		// print_str("[EXT-IRQ-5]");
+		// printf("[EXT-IRQ-5]");
 	}
 
 	if ((irqs & 1) != 0) {
+		// tcp_tmr();
+		enable_timer(31250000);
 		timer_irq_count++;
-		// print_str("[TIMER-IRQ]");
+		// printf("[TIMER-IRQ]");
 		// *(volatile unsigned int*)0x80000000 = i;
 		// i++;
 		// enable_timer(125000000);
 	}
+
+	// if ((irqs & 6) != 0)
+	// {
+	// 	uint32_t pc = (regs[0] & 1) ? regs[0] - 3 : regs[0] - 4;
+	// 	uint32_t instr = *(uint16_t*)pc;
+
+	// 	if ((instr & 3) == 3)
+	// 		instr = instr | (*(uint16_t*)(pc + 2)) << 16;
+
+	// 	printf("\n------------------------------------------------------------\n");
+
+	// 	if ((irqs & 2) != 0) {
+	// 		if (instr == 0x00100073 || instr == 0x9002) {
+	// 			printf("EBREAK instruction at 0x%0x\n",pc);
+	// 		} else {
+	// 			printf("Illegal Instruction at 0x%0x: 0x%0x\n",pc, instr);
+	// 		}
+	// 	}
+
+	// 	if ((irqs & 4) != 0) {
+	// 		printf("Bus error in Instruction at 0x%0x: 0x%0x\n",pc, instr);
+	// 	}
+
+	// 	for (int i = 0; i < 8; i++)
+	// 	for (int k = 0; k < 4; k++)
+	// 	{
+	// 		int r = i + k*8;
+
+	// 		printf("regs[%02d] = %0x",r, regs[r]);
+	// 		if (k == 3)
+	// 			printf("\n");
+	// 		else
+	// 			printf(" ");
+	// 	}
+
+	// 	printf("------------------------------------------------------------\n");
+
+	// 	// printf("Number of fast external IRQs counted: ");
+	// 	// printf(ext_irq_4_count);
+	// 	// printf("\n");
+
+	// 	// printf("Number of slow external IRQs counted: ");
+	// 	// printf(ext_irq_5_count);
+	// 	// printf("\n");
+
+	// 	// printf("Number of timer IRQs counted: ");
+	// 	// printf(timer_irq_count);
+	// 	// printf("\n");
+
+	// 	__asm__ volatile ("ebreak");
+	// }
 
 	return regs;
 }

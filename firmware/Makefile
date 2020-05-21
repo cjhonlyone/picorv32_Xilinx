@@ -12,7 +12,7 @@ CCFLAGS = -march=rv32im -mabi=ilp32 -Wall -g
 FIRMWARE_OBJS = start.o main.o
 
 MYLIBS_OBJS = mylib.o
-RAM_SIZE = 131072 #64*1024
+RAM_SIZE = 262144 #64*1024
 BLOCK_RAM_SIZE = 4096
 
 nPORT = lwip/contrib/ports/riscv

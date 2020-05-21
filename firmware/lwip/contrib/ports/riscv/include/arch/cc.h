@@ -69,7 +69,7 @@ typedef signed     long long    s64_t;
 #define X16_F "x"
 #define X32_F "x"
 
-#define LWIP_RAND rand
+#define LWIP_RAND time
 
 typedef unsigned long mem_ptr_t;
 

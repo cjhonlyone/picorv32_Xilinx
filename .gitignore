@@ -6,5 +6,6 @@
 /xapp1144/
 /emac/
 /_xmsgs/
+/firmware/hex/
 *.gtkw
 *.vcd

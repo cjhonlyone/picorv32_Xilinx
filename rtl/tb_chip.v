@@ -82,12 +82,12 @@ module testbench;
          .PHY_TXCLK      (PHY_TXCLK),
          .PHY_TXD        (PHY_TXD),
          .PHY_TXCTL_TXEN (PHY_TXCTL_TXEN),
-         .PHY_TXER       (PHY_TXER),
+         .PHY_TXER       (PHY_TXER)
 
-         .PHY_RXD        (PHY_RXD),
-         .PHY_RXCTL_RXDV (PHY_RXCTL_RXDV),
-         .PHY_RXER       (PHY_RXER),
-         .PHY_RXCLK      (PHY_RXCLK)
+         // .PHY_RXD        (PHY_RXD),
+         // .PHY_RXCTL_RXDV (PHY_RXCTL_RXDV),
+         // .PHY_RXER       (PHY_RXER),
+         // .PHY_RXCLK      (PHY_RXCLK)
       );
 
    ge_eth inst_ge_eth
@@ -117,10 +117,11 @@ module testbench;
       reset_async = 1;
       $write("reset finished\n");
 
-
-      repeat (500000) @(posedge clk);
-      repeat (500000) @(posedge clk);
+      // repeat (500000) @(posedge clk);
+      // repeat (500000) @(posedge clk);
       
+      repeat (1000) @(posedge clk);
+
       $finish;
    end
 
@@ -159,38 +160,71 @@ module testbench;
    end
 
    initial begin
-      $readmemh("firmware/firmwareram00.hex", uut._top._text_RAM._ram_4k_32_0._bram0.mem);
-      $readmemh("firmware/firmwareram01.hex", uut._top._text_RAM._ram_4k_32_0._bram1.mem);
-      $readmemh("firmware/firmwareram02.hex", uut._top._text_RAM._ram_4k_32_0._bram2.mem);
-      $readmemh("firmware/firmwareram03.hex", uut._top._text_RAM._ram_4k_32_0._bram3.mem);
-      $readmemh("firmware/firmwareram04.hex", uut._top._text_RAM._ram_4k_32_1._bram0.mem);
-      $readmemh("firmware/firmwareram05.hex", uut._top._text_RAM._ram_4k_32_1._bram1.mem);
-      $readmemh("firmware/firmwareram06.hex", uut._top._text_RAM._ram_4k_32_1._bram2.mem);
-      $readmemh("firmware/firmwareram07.hex", uut._top._text_RAM._ram_4k_32_1._bram3.mem);
-      $readmemh("firmware/firmwareram08.hex", uut._top._text_RAM._ram_4k_32_2._bram0.mem);
-      $readmemh("firmware/firmwareram09.hex", uut._top._text_RAM._ram_4k_32_2._bram1.mem);
-      $readmemh("firmware/firmwareram10.hex", uut._top._text_RAM._ram_4k_32_2._bram2.mem);
-      $readmemh("firmware/firmwareram11.hex", uut._top._text_RAM._ram_4k_32_2._bram3.mem);
-      $readmemh("firmware/firmwareram12.hex", uut._top._text_RAM._ram_4k_32_3._bram0.mem);
-      $readmemh("firmware/firmwareram13.hex", uut._top._text_RAM._ram_4k_32_3._bram1.mem);
-      $readmemh("firmware/firmwareram14.hex", uut._top._text_RAM._ram_4k_32_3._bram2.mem);
-      $readmemh("firmware/firmwareram15.hex", uut._top._text_RAM._ram_4k_32_3._bram3.mem);
-      $readmemh("firmware/firmwareram16.hex", uut._top._heap_RAM._ram_4k_32_0._bram0.mem);
-      $readmemh("firmware/firmwareram17.hex", uut._top._heap_RAM._ram_4k_32_0._bram1.mem);
-      $readmemh("firmware/firmwareram18.hex", uut._top._heap_RAM._ram_4k_32_0._bram2.mem);
-      $readmemh("firmware/firmwareram19.hex", uut._top._heap_RAM._ram_4k_32_0._bram3.mem);
-      $readmemh("firmware/firmwareram20.hex", uut._top._heap_RAM._ram_4k_32_1._bram0.mem);
-      $readmemh("firmware/firmwareram21.hex", uut._top._heap_RAM._ram_4k_32_1._bram1.mem);
-      $readmemh("firmware/firmwareram22.hex", uut._top._heap_RAM._ram_4k_32_1._bram2.mem);
-      $readmemh("firmware/firmwareram23.hex", uut._top._heap_RAM._ram_4k_32_1._bram3.mem);
-      $readmemh("firmware/firmwareram24.hex", uut._top._heap_RAM._ram_4k_32_2._bram0.mem);
-      $readmemh("firmware/firmwareram25.hex", uut._top._heap_RAM._ram_4k_32_2._bram1.mem);
-      $readmemh("firmware/firmwareram26.hex", uut._top._heap_RAM._ram_4k_32_2._bram2.mem);
-      $readmemh("firmware/firmwareram27.hex", uut._top._heap_RAM._ram_4k_32_2._bram3.mem);
-      $readmemh("firmware/firmwareram28.hex", uut._top._heap_RAM._ram_4k_32_3._bram0.mem);
-      $readmemh("firmware/firmwareram29.hex", uut._top._heap_RAM._ram_4k_32_3._bram1.mem);
-      $readmemh("firmware/firmwareram30.hex", uut._top._heap_RAM._ram_4k_32_3._bram2.mem);
-      $readmemh("firmware/firmwareram31.hex", uut._top._heap_RAM._ram_4k_32_3._bram3.mem);
+      $readmemh("firmware/hex/firmwareram00.hex", uut._top._text_RAM._ram_4k_32_0._bram0.mem);
+      $readmemh("firmware/hex/firmwareram01.hex", uut._top._text_RAM._ram_4k_32_0._bram1.mem);
+      $readmemh("firmware/hex/firmwareram02.hex", uut._top._text_RAM._ram_4k_32_0._bram2.mem);
+      $readmemh("firmware/hex/firmwareram03.hex", uut._top._text_RAM._ram_4k_32_0._bram3.mem);
+      $readmemh("firmware/hex/firmwareram04.hex", uut._top._text_RAM._ram_4k_32_1._bram0.mem);
+      $readmemh("firmware/hex/firmwareram05.hex", uut._top._text_RAM._ram_4k_32_1._bram1.mem);
+      $readmemh("firmware/hex/firmwareram06.hex", uut._top._text_RAM._ram_4k_32_1._bram2.mem);
+      $readmemh("firmware/hex/firmwareram07.hex", uut._top._text_RAM._ram_4k_32_1._bram3.mem);
+      $readmemh("firmware/hex/firmwareram08.hex", uut._top._text_RAM._ram_4k_32_2._bram0.mem);
+      $readmemh("firmware/hex/firmwareram09.hex", uut._top._text_RAM._ram_4k_32_2._bram1.mem);
+      $readmemh("firmware/hex/firmwareram10.hex", uut._top._text_RAM._ram_4k_32_2._bram2.mem);
+      $readmemh("firmware/hex/firmwareram11.hex", uut._top._text_RAM._ram_4k_32_2._bram3.mem);
+      $readmemh("firmware/hex/firmwareram12.hex", uut._top._text_RAM._ram_4k_32_3._bram0.mem);
+      $readmemh("firmware/hex/firmwareram13.hex", uut._top._text_RAM._ram_4k_32_3._bram1.mem);
+      $readmemh("firmware/hex/firmwareram14.hex", uut._top._text_RAM._ram_4k_32_3._bram2.mem);
+      $readmemh("firmware/hex/firmwareram15.hex", uut._top._text_RAM._ram_4k_32_3._bram3.mem);
+      $readmemh("firmware/hex/firmwareram16.hex", uut._top._text_RAM._ram_4k_32_4._bram0.mem);
+      $readmemh("firmware/hex/firmwareram17.hex", uut._top._text_RAM._ram_4k_32_4._bram1.mem);
+      $readmemh("firmware/hex/firmwareram18.hex", uut._top._text_RAM._ram_4k_32_4._bram2.mem);
+      $readmemh("firmware/hex/firmwareram19.hex", uut._top._text_RAM._ram_4k_32_4._bram3.mem);
+      $readmemh("firmware/hex/firmwareram20.hex", uut._top._text_RAM._ram_4k_32_5._bram0.mem);
+      $readmemh("firmware/hex/firmwareram21.hex", uut._top._text_RAM._ram_4k_32_5._bram1.mem);
+      $readmemh("firmware/hex/firmwareram22.hex", uut._top._text_RAM._ram_4k_32_5._bram2.mem);
+      $readmemh("firmware/hex/firmwareram23.hex", uut._top._text_RAM._ram_4k_32_5._bram3.mem);
+      $readmemh("firmware/hex/firmwareram24.hex", uut._top._text_RAM._ram_4k_32_6._bram0.mem);
+      $readmemh("firmware/hex/firmwareram25.hex", uut._top._text_RAM._ram_4k_32_6._bram1.mem);
+      $readmemh("firmware/hex/firmwareram26.hex", uut._top._text_RAM._ram_4k_32_6._bram2.mem);
+      $readmemh("firmware/hex/firmwareram27.hex", uut._top._text_RAM._ram_4k_32_6._bram3.mem);
+      $readmemh("firmware/hex/firmwareram28.hex", uut._top._text_RAM._ram_4k_32_7._bram0.mem);
+      $readmemh("firmware/hex/firmwareram29.hex", uut._top._text_RAM._ram_4k_32_7._bram1.mem);
+      $readmemh("firmware/hex/firmwareram30.hex", uut._top._text_RAM._ram_4k_32_7._bram2.mem);
+      $readmemh("firmware/hex/firmwareram31.hex", uut._top._text_RAM._ram_4k_32_7._bram3.mem);
+
+      $readmemh("firmware/hex/firmwareram32.hex", uut._top._heap_RAM._ram_4k_32_0._bram0.mem);
+      $readmemh("firmware/hex/firmwareram33.hex", uut._top._heap_RAM._ram_4k_32_0._bram1.mem);
+      $readmemh("firmware/hex/firmwareram34.hex", uut._top._heap_RAM._ram_4k_32_0._bram2.mem);
+      $readmemh("firmware/hex/firmwareram35.hex", uut._top._heap_RAM._ram_4k_32_0._bram3.mem);
+      $readmemh("firmware/hex/firmwareram36.hex", uut._top._heap_RAM._ram_4k_32_1._bram0.mem);
+      $readmemh("firmware/hex/firmwareram37.hex", uut._top._heap_RAM._ram_4k_32_1._bram1.mem);
+      $readmemh("firmware/hex/firmwareram38.hex", uut._top._heap_RAM._ram_4k_32_1._bram2.mem);
+      $readmemh("firmware/hex/firmwareram39.hex", uut._top._heap_RAM._ram_4k_32_1._bram3.mem);
+      $readmemh("firmware/hex/firmwareram40.hex", uut._top._heap_RAM._ram_4k_32_2._bram0.mem);
+      $readmemh("firmware/hex/firmwareram41.hex", uut._top._heap_RAM._ram_4k_32_2._bram1.mem);
+      $readmemh("firmware/hex/firmwareram42.hex", uut._top._heap_RAM._ram_4k_32_2._bram2.mem);
+      $readmemh("firmware/hex/firmwareram43.hex", uut._top._heap_RAM._ram_4k_32_2._bram3.mem);
+      $readmemh("firmware/hex/firmwareram44.hex", uut._top._heap_RAM._ram_4k_32_3._bram0.mem);
+      $readmemh("firmware/hex/firmwareram45.hex", uut._top._heap_RAM._ram_4k_32_3._bram1.mem);
+      $readmemh("firmware/hex/firmwareram46.hex", uut._top._heap_RAM._ram_4k_32_3._bram2.mem);
+      $readmemh("firmware/hex/firmwareram47.hex", uut._top._heap_RAM._ram_4k_32_3._bram3.mem);
+      $readmemh("firmware/hex/firmwareram48.hex", uut._top._heap_RAM._ram_4k_32_4._bram0.mem);
+      $readmemh("firmware/hex/firmwareram49.hex", uut._top._heap_RAM._ram_4k_32_4._bram1.mem);
+      $readmemh("firmware/hex/firmwareram50.hex", uut._top._heap_RAM._ram_4k_32_4._bram2.mem);
+      $readmemh("firmware/hex/firmwareram51.hex", uut._top._heap_RAM._ram_4k_32_4._bram3.mem);
+      $readmemh("firmware/hex/firmwareram52.hex", uut._top._heap_RAM._ram_4k_32_5._bram0.mem);
+      $readmemh("firmware/hex/firmwareram53.hex", uut._top._heap_RAM._ram_4k_32_5._bram1.mem);
+      $readmemh("firmware/hex/firmwareram54.hex", uut._top._heap_RAM._ram_4k_32_5._bram2.mem);
+      $readmemh("firmware/hex/firmwareram55.hex", uut._top._heap_RAM._ram_4k_32_5._bram3.mem);
+      $readmemh("firmware/hex/firmwareram56.hex", uut._top._heap_RAM._ram_4k_32_6._bram0.mem);
+      $readmemh("firmware/hex/firmwareram57.hex", uut._top._heap_RAM._ram_4k_32_6._bram1.mem);
+      $readmemh("firmware/hex/firmwareram58.hex", uut._top._heap_RAM._ram_4k_32_6._bram2.mem);
+      $readmemh("firmware/hex/firmwareram59.hex", uut._top._heap_RAM._ram_4k_32_6._bram3.mem);
+      $readmemh("firmware/hex/firmwareram60.hex", uut._top._heap_RAM._ram_4k_32_7._bram0.mem);
+      $readmemh("firmware/hex/firmwareram61.hex", uut._top._heap_RAM._ram_4k_32_7._bram1.mem);
+      $readmemh("firmware/hex/firmwareram62.hex", uut._top._heap_RAM._ram_4k_32_7._bram2.mem);
+      $readmemh("firmware/hex/firmwareram63.hex", uut._top._heap_RAM._ram_4k_32_7._bram3.mem);
    end	
 
 endmodule

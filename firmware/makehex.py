@@ -26,13 +26,13 @@ with open(binfile, "rb") as f:
 assert len(bindata) < 4*ramsize
 assert len(bindata) % 4 == 0
 
-f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f0 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f1 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f2 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f3 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
 
 blockramsize = blockramsize
@@ -56,16 +56,16 @@ for i in range(ramsize):
         f2.close()
         f3.close()
         if (ramidx != ramnum) :
-            f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f0 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f1 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f2 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f3 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
 
-f0 = open('firmwarezero.hex', 'w')
+f0 = open('hex/firmwarezero.hex', 'w')
 for i in range(4096):
     f0.write("00\n")
 f0.close()

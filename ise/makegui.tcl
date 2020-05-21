@@ -7,7 +7,12 @@ project set package ff484
 project set speed -1
 # add all the source HDLs and ucf
 xfile add ../rtl/chip.v
-xfile add ../rtl/picorv32.v ../rtl/top.v ../rtl/simpleuart.v ../rtl/DMAC.v
+xfile add ../rtl/picorv32.v ../rtl/top.v  ../rtl/DMAC.v
+
+xfile add ../rtl/uart/fifo.v
+xfile add ../rtl/uart/uart.v
+xfile add ../rtl/uart/uart_fifo.v
+xfile add ../rtl/uart/uart_top.v
 
 xfile add ../rtl/eth/axis_adapter.v
 xfile add ../rtl/eth/axis_async_fifo.v

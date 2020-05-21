@@ -1,6 +1,6 @@
 module chip #
 (
-  parameter DMA_RX_INTERVAL = 32'd124999999,
+  parameter DMA_RX_INTERVAL = 32'd1249999,
   parameter UART_BAUD       = 32'd271
 )(
   // input [31:0] test,

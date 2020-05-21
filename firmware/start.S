@@ -16,7 +16,7 @@
 // will save the rest if necessary. I.e. skip x3, x4, x8, x9, and x18-x27.
 #undef ENABLE_FASTIRQ
 
-#def ENABLE_FASTIRQ
+//#def ENABLE_FASTIRQ
 
 #include "custom_ops.S"
 

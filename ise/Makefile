@@ -11,6 +11,9 @@ chip:
 #prog: data
 #	${ISE_DIR}/impact -batch impact.cmd
 
+data:
+	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
+
 test:
 	${ISE_DIR}/data2mem -bm ../rtl/chip_bd.bmm -bd ../tests/firmware/firmware.elf -bt chip.bit -o b chip_mem.bit;
 	${ISE_DIR}/impact -batch impact.cmd
@@ -44,5 +47,6 @@ clean:
 	rm -f chip_map.twr chip_map.twx
 	rm -f chip.xise chip.gise *.html *.log
 	rm -rf iseconfig
+	rm -rf *.xdl
 # 	rm -f chip_bd.bmm
 # 	rm -f *.bit

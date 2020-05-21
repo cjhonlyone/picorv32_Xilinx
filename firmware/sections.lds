@@ -30,7 +30,7 @@ SECTIONS {
         . = ALIGN(4);
     } 
 
-    . = 0x10000;   /* 16KB */
+    . = 0x20000;   /* 16KB */
     /* This is the initialized data section */
     .data :
     {

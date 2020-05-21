@@ -42,7 +42,7 @@ module top #
     .ENABLE_MUL(1),
     .ENABLE_DIV(1),
     .ENABLE_IRQ(1),
-    .STACKADDR(32'h 0001_ffff)) 
+    .STACKADDR(32'h 0003_ffff)) 
   _picorv32(
     .clk(clk),
     .resetn(resetn),
@@ -64,11 +64,11 @@ module top #
     irq[5] <= rx_DMA_int;//buttons_i[1];
   end
 
-  wire        text_valid = mem_valid && (mem_addr < 32'h 0001_0000);
+  wire        text_valid = mem_valid && (mem_addr < 32'h 0002_0000);
   wire        text_ready;
   wire [31:0] text_rdata;
 
-  wire        heap_valid = mem_valid && (mem_addr > 32'h 0000_FFFF) && (mem_addr < 32'h 0002_0000);
+  wire        heap_valid = mem_valid && (mem_addr > 32'h 0001_FFFF) && (mem_addr < 32'h 0004_0000);
   wire        heap_ready;
   wire [31:0] heap_rdata;
 
@@ -102,7 +102,7 @@ module top #
   wire        BUS_valid;
   wire        BUS_ready;
 
-  RAM_64KB _text_RAM
+  RAM_128KB _text_RAM
     (
       .clk       (clk),
       .resetn    (resetn),
@@ -114,7 +114,7 @@ module top #
       .mem_rdata (text_rdata)
     );
 
-  RAM_64KB _heap_RAM
+  RAM_128KB _heap_RAM
     (
       .clk       (clk),
       .resetn    (resetn),
@@ -294,25 +294,6 @@ module top #
       .rx        (rxd)
     );
 
-  // simpleuart #(.DEFAULT_DIV(UART_BAUD))
-  // uart (
-  //   .clk         (clk         ),
-  //   .resetn      (resetn      ),
-
-  //   .ser_tx      (txd      ),
-  //   .ser_rx      (rxd      ),
-
-  //   .reg_div_we  (0),
-  //   // .reg_div_di  (mem_wdata),
-  //   // .reg_div_do  (simpleuart_reg_div_do),
-
-  //   .reg_dat_we  (simpleuart_reg_dat_sel ? mem_wstrb[0] : 1'b 0),
-  //   .reg_dat_re  (simpleuart_reg_dat_sel && !mem_wstrb),
-  //   .reg_dat_di  (mem_wdata),
-  //   .reg_dat_do  (simpleuart_reg_dat_do),
-  //   .reg_dat_wait(simpleuart_reg_dat_wait)
-  // );
-
   assign mem_rdata = uart_valid ? uart_rdata :
                text_valid ? text_rdata : 
                (!BUS_ready && mux_heap_valid) ? mux_heap_rdata : 
@@ -323,10 +304,24 @@ module top #
                      (io_valid && io_ready) || 
                      (uart_valid && uart_ready) ||
                      (DMA_valid && DMA_ready) ;
-  
+							
+	// wire [35:0] CONTROL0;
+	// ICON ICON (
+	// 	 .CONTROL0(CONTROL0) // INOUT BUS [35:0]
+	// );
+
+	// ILA YourInstanceName (
+	// 	 .CONTROL(CONTROL0), // INOUT BUS [35:0]
+	// 	 .CLK(clk), // IN
+	// 	 .TRIG0(phy_txd), // IN BUS [7:0]
+	// 	 .TRIG1(phy_tx_en), // IN BUS [0:0]
+	// 	 .TRIG2(mem_addr) // IN BUS [31:0]
+	// );
+
+
 endmodule
 
-module RAM_64KB(
+module RAM_128KB(
   input clk, resetn,
 
   input            mem_valid,
@@ -337,27 +332,48 @@ module RAM_64KB(
   input     [ 3:0] mem_wstrb,
   output    [31:0] mem_rdata
 );
+
   wire [31:0] ram_rdata_0;
   wire [31:0] ram_rdata_1;
   wire [31:0] ram_rdata_2;
   wire [31:0] ram_rdata_3;
+  wire [31:0] ram_rdata_4;
+  wire [31:0] ram_rdata_5;
+  wire [31:0] ram_rdata_6;
+  wire [31:0] ram_rdata_7;
 
   ram_4k_32 _ram_4k_32_0(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_0, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b00)) ? mem_wstrb : 4'b0,
-    mem_valid);
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b000)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
   ram_4k_32 _ram_4k_32_1(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_1, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b01)) ? mem_wstrb : 4'b0,
-    mem_valid);
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b001)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
   ram_4k_32 _ram_4k_32_2(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_2, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b10)) ? mem_wstrb : 4'b0,
-    mem_valid);
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b010)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
   ram_4k_32 _ram_4k_32_3(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_3, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b11)) ? mem_wstrb : 4'b0,
-    mem_valid);
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b011)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_4(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_4, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b100)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_5(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_5, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b101)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_6(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_6, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b110)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_7(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_7, 
+    (mem_valid && !mem_ready && (mem_addr[16:14] == 3'b111)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
 
   reg ram_ready1, ram_ready2;
   reg mem_valid_reg;
@@ -384,19 +400,31 @@ module RAM_64KB(
   reg [31:0] ram_rdata_1_reg0;
   reg [31:0] ram_rdata_2_reg0;
   reg [31:0] ram_rdata_3_reg0;
+  reg [31:0] ram_rdata_4_reg0;
+  reg [31:0] ram_rdata_5_reg0;
+  reg [31:0] ram_rdata_6_reg0;
+  reg [31:0] ram_rdata_7_reg0;
 
   always @(posedge clk) begin
     ram_rdata_0_reg0 <= ram_rdata_0;
     ram_rdata_1_reg0 <= ram_rdata_1;
     ram_rdata_2_reg0 <= ram_rdata_2;
     ram_rdata_3_reg0 <= ram_rdata_3;
+    ram_rdata_4_reg0 <= ram_rdata_4;
+    ram_rdata_5_reg0 <= ram_rdata_5;
+    ram_rdata_6_reg0 <= ram_rdata_6;
+    ram_rdata_7_reg0 <= ram_rdata_7;
   end
 
-  assign mem_rdata = 
-        (mem_valid && (mem_addr[15:14] == 2'b00)) ? ram_rdata_0_reg0 : 
-        (mem_valid && (mem_addr[15:14] == 2'b01)) ? ram_rdata_1_reg0 : 
-        (mem_valid && (mem_addr[15:14] == 2'b10)) ? ram_rdata_2_reg0 : 
-        (mem_valid && (mem_addr[15:14] == 2'b11)) ? ram_rdata_3_reg0 : 32'h 0000_0000 ;
+  assign mem_rdata =
+              (mem_valid && (mem_addr[16:14] == 3'b000)) ? ram_rdata_0_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b001)) ? ram_rdata_1_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b010)) ? ram_rdata_2_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b011)) ? ram_rdata_3_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b100)) ? ram_rdata_4_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b101)) ? ram_rdata_5_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b110)) ? ram_rdata_6_reg0 : 
+              (mem_valid && (mem_addr[16:14] == 3'b111)) ? ram_rdata_7_reg0 : 32'h 0000_0000 ;
 
 endmodule
 

@@ -225,8 +225,13 @@ module DMAC #
 	reg    [ 2:0] rx_BD_idx;
 	reg    [ 2:0] tx_BD_idx;
 	reg    [31:0] BD_frame_len;
+
 	reg    [ 2:0] keep2bytes;
 	reg    [ 3:0] bytes2keep;
+	reg    [ 3:0] addr2keep;
+	reg    [ 2:0] addr2len;
+	reg    [31:0] heap_addr_m;
+	reg    [31:0] heap_rdata_wrap;
 
 	reg rx_axis_tready_m;
 	reg rx_axis_tlast_m;
@@ -249,6 +254,10 @@ module DMAC #
     reg        rtx_axis_tlast;
     reg        rtx_axis_tuser;
 
+    reg        rtx_axis_tvalid_m;
+
+    wire       rtx_axis_tvalid_pedge = ((rtx_axis_tvalid_m == 0) && (rtx_axis_tvalid ==  1));
+
     reg [47:0] dst_mac;
 
     reg drop_frame;
@@ -265,13 +274,48 @@ module DMAC #
 
 	always @(*) begin
 		case(BD_frame_len[1:0])
-		2'h3: bytes2keep = 4'd7;
-		2'h2: bytes2keep = 4'd3;
-		2'h1: bytes2keep = 4'd1;
-		2'h0: bytes2keep = 4'd0;
+		2'h3: bytes2keep = 4'h7;
+		2'h2: bytes2keep = 4'h3;
+		2'h1: bytes2keep = 4'h1;
+		2'h0: bytes2keep = 4'hf;
 		endcase
 	end
 
+	always @(*) begin
+		case(heap_addr[1:0])
+		2'h3: addr2keep = 4'd1;
+		2'h2: addr2keep = 4'h3;
+		2'h1: addr2keep = 4'h7;
+		2'h0: addr2keep = 4'hf;
+		endcase
+	end
+
+	always @(*) begin
+		case(heap_addr[1:0])
+		2'h3: addr2len = 3'd1;
+		2'h2: addr2len = 3'h2;
+		2'h1: addr2len = 3'h3;
+		2'h0: addr2len = 3'h4;
+		endcase
+	end
+
+	always @(*) begin
+		case(heap_addr_m[1:0])
+		2'h3: heap_rdata_wrap = {8'h00,8'h00,8'h00,heap_rdata[31:24]};
+		2'h2: heap_rdata_wrap = {8'h00,8'h00,heap_rdata[31:16]};
+		2'h1: heap_rdata_wrap = {8'h00,heap_rdata[31:8]};
+		2'h0: heap_rdata_wrap = heap_rdata;
+		endcase
+	end
+
+always @(posedge clk) begin
+	if (!resetn) begin
+		heap_addr_m <= 0;
+	end else begin
+		if (rtx_axis_tvalid_pedge)
+			heap_addr_m <= heap_addr;
+	end
+end
 // FSM
 
 localparam [ 6:0]
@@ -280,8 +324,8 @@ localparam [ 6:0]
     STATE_ABUS  = 7'b000_0100,
     STATE_WRITE = 7'b000_1000,
     STATE_READ  = 7'b001_0000,
-    STATE_KEEP  = 7'b010_0000,
-    STATE_FULL  = 7'b100_0000;
+    STATE_KEEP  = 7'b010_0000;
+    // STATE_ALIGN  = 7'b100_0000;
 
     reg [ 6:0] DMArx_cur_state;
     reg [ 6:0] DMArx_nxt_state;
@@ -313,9 +357,9 @@ localparam [ 6:0]
 			STATE_KEEP: begin
 				DMArx_nxt_state = tx_sta_ready ? STATE_WAIT : STATE_KEEP;
 			end	
-			STATE_FULL: begin
-				DMArx_nxt_state = (&rx_BD_sta_r == 0) ? STATE_WAIT : STATE_FULL;
-			end
+			// STATE_ALIGN: begin
+			// 	DMArx_nxt_state = rtx_axis_tvalid ? STATE_READ : STATE_ALIGN;
+			// end
 			default:DMArx_nxt_state = STATE_IDLE;
 		endcase
 	end
@@ -417,14 +461,36 @@ localparam [ 6:0]
 					rtx_axis_tlast <= 0;
 					rtx_axis_tuser <= 0;
 				end
+				// STATE_ALIGN: begin
+				// 	heap_valid <= 1;
+				// 	heap_addr <= heap_addr + addr2len;
+				// 	heap_wdata <= 32'd0;
+				// 	heap_wstrb <= 4'h0;
+
+				// 	BUS_valid <= 1;
+				// 	BD_frame_len <= BD_frame_len - addr2len;
+
+				// 	rx_axis_tready <= 0;
+
+				// 	tx_sta_ready <= 0;
+
+				// 	rtx_axis_tvalid <= 1;
+				// 	rtx_axis_tdata <= 0;
+				// 	rtx_axis_tkeep <= addr2keep;
+
+				// 	rtx_axis_tlast <= 0;
+				// 	rtx_axis_tuser <= 0;
+				// end
 				STATE_READ: begin
 					heap_valid <= 1;
-					heap_addr <= rtx_axis_tvalid ? (heap_addr + 4) : heap_addr;
+					heap_addr <= rtx_axis_tvalid ? rtx_axis_tvalid_pedge ? (heap_addr + addr2len) :
+						(heap_addr + 4) : heap_addr;
 					heap_wdata <= 32'd0;
 					heap_wstrb <= 4'h0;
 
 					BUS_valid <= 1;
-					BD_frame_len <= rtx_axis_tvalid ? (BD_frame_len - 4) : BD_frame_len;
+					BD_frame_len <= rtx_axis_tvalid ? rtx_axis_tvalid_pedge ? (BD_frame_len - addr2len) :
+						(BD_frame_len - 4) : BD_frame_len;
 
 					rx_axis_tready <= 0;
 
@@ -432,8 +498,10 @@ localparam [ 6:0]
 
 					rtx_axis_tvalid <= 1;
 					rtx_axis_tdata <= 0;
-					rtx_axis_tkeep <= (BD_frame_len < 32'd8) ? bytes2keep : 4'hf;
-					rtx_axis_tlast <= (BD_frame_len < 32'd8) ? 1 : 0;
+					rtx_axis_tkeep <= !rtx_axis_tvalid ? addr2keep :
+						(BD_frame_len < 32'd8) ? bytes2keep : 4'hf;
+
+					rtx_axis_tlast <= (BD_frame_len <= 32'd8) ? 1 : 0;
 					rtx_axis_tuser <= 0;
 				end
 				STATE_KEEP: begin
@@ -455,25 +523,7 @@ localparam [ 6:0]
 					rtx_axis_tlast <= 0;
 					rtx_axis_tuser <= 0;
 				end
-				STATE_FULL: begin
-					heap_valid <= 0;
-					heap_addr <= 32'd0;
-					heap_wdata <= 32'd0;
-					heap_wstrb <= 4'h0;
 
-					BUS_valid <= 0;
-					BD_frame_len <= BD_frame_len;
-
-					rx_axis_tready <= 0;
-
-					tx_sta_ready <= 0;
-
-					rtx_axis_tdata <= 0;
-					rtx_axis_tkeep <= 0;
-					rtx_axis_tvalid <= 0;
-					rtx_axis_tlast <= 0;
-					rtx_axis_tuser <= 0;
-				end
 			endcase
 
 		end
@@ -481,7 +531,7 @@ localparam [ 6:0]
 	
 	wire keep_frame;
 	assign keep_frame = (dst_mac == 48'hff_ff_ff_ff_ff_ff) ? 1 :
-						(dst_mac == 48'haa_bb_cc_dd_ee_ff) ? 1 : 0;
+						(dst_mac == 48'h00_0a_35_00_01_02) ? 1 : 0;
 
 	always @(posedge clk) begin
 		if (!resetn) begin
@@ -513,9 +563,13 @@ localparam [ 6:0]
 			// reset
 			rx_axis_tready_m <= 0;
 			rx_axis_tlast_m <= 0;
+
+			rtx_axis_tvalid_m <= 0;
 		end else begin
 			rx_axis_tready_m <= rx_axis_tready;
 			rx_axis_tlast_m <= rx_axis_tlast;
+
+			rtx_axis_tvalid_m <= rtx_axis_tvalid;
 		end
 	end
 
@@ -532,7 +586,7 @@ localparam [ 6:0]
 		tx_axis_tlast_m2 <= tx_axis_tlast_m1;
 		tx_axis_tuser_m2 <= tx_axis_tuser_m1;
 
-		tx_axis_tdata <= heap_rdata;
+		tx_axis_tdata <= heap_ready ? heap_rdata_wrap : heap_rdata;
 		tx_axis_tkeep <= tx_axis_tkeep_m2;
 		tx_axis_tvalid <= tx_axis_tvalid_m2;
 		tx_axis_tlast <= tx_axis_tlast_m2;
