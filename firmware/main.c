@@ -30,42 +30,14 @@ void delay(int m)
 { int i;
   for (i=0; i<m; i++) {
     asm volatile("nop"); } }
-
-volatile u32_t *tx_BD_sta_ptr_t = 0x800000CC;
 	
 struct ip_addr ipaddr, netmask, gw;
 
 int main()
 { 
 
-// ENABLE_DMA = 1;
-// *((u32_t *)(0x00035368))=0xe000ffff;
-// *((u32_t *)(0x0003536C))=0xbda1684c;
-// *((u32_t *)(0x00035370))=0x00350a00;
-// *((u32_t *)(0x00035374))=0x00080201;
-// *((u32_t *)(0x00035378))=0x2c000045;
-// *((u32_t *)(0x0003537C))=0x00000000;
-// *((u32_t *)(0x00035380))=0xf03706ff;
-// *((u32_t *)(0x00035384))=0x0a01a8c0;
-// *((u32_t *)(0x00035388))=0x8101a8c0;
-// *((u32_t *)(0x0003538C))=0xb0630700;
-// *((u32_t *)(0x00035390))=0x7c190000;
-// *((u32_t *)(0x00035394))=0xfd5b86c6;
-// *((u32_t *)(0x00035398))=0x60081260;
-// *((u32_t *)(0x0003539C))=0x0000e76f;
-// *((u32_t *)(0x000353a0))=0xf0010402;
-
-//     tx_BD_adr_0 = 0x0003536a;
-//     tx_BD_len_0 = 58;
-
-//     tx_BD_sta = 1;
-//     while(tx_BD_sta ==  1);
-
-//     printf("xxx");
-//     while(1);
-
 	// err_t udpsenderr;
-	printf("\n\n\nsystem boot.......................\n\n\n");
+	printf("system booting .......................\n");
 
 	for (int j = 0;j < 8000;j++)
 	{
@@ -98,9 +70,13 @@ int main()
 	// start_tcp_application();
 	// start_udp_application();
 	// udpecho_raw_init();
+
+	printf("system boot finished\n");
 	
 	/* receive and process packets */
 	echo_init();
+
+
 
 	long time_ = time();
 	enable_timer(31200000);
@@ -118,91 +94,6 @@ int main()
 	}
   
 }
-
-// err_t tcp_recv_callback(void *arg, struct tcp_pcb *tpcb,
-//                                struct pbuf *p, err_t err)
-// {
-// 	/* do not read the packet if we are not in ESTABLISHED state */
-// 	if (!p) {
-// 		tcp_close(tpcb);
-// 		tcp_recv(tpcb, NULL);
-// 		return ERR_OK;
-// 	}
-
-// 	/* indicate that the packet has been received */
-// 	tcp_recved(tpcb, p->len);
-
-// 	/* echo back the payload */
-// 	/* in this case, we assume that the payload is < TCP_SND_BUF */
-// 	if (tcp_sndbuf(tpcb) > p->len) {
-// 		err = tcp_write(tpcb, p->payload, p->len, 1);
-// 	} else
-// 		printf("no space in tcp_sndbuf\n\r");
-
-// 	/* free the received pbuf */
-// 	pbuf_free(p);
-
-// 	return ERR_OK;
-// }
-
-// err_t tcp_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
-// {
-// 	static int connection = 1;
-
-// 	/* set the receive callback for this connection */
-// 	tcp_recv(newpcb, tcp_recv_callback);
-// 	printf("accept_callback tcp_recv");
-
-// 	 // just use an integer number indicating the connection id as the
-// 	 //   callback argument 
-// 	tcp_arg(newpcb, (void*)connection);
-
-// 	printf("accept_callback tcp_arg");
-
-// 	/* increment for subsequent accepted connections */
-// 	connection++;
-
-// 	return ERR_OK;
-// }
-
-
-// int start_tcp_application()
-// {
-// 	struct tcp_pcb *pcb;
-// 	err_t err;
-// 	unsigned port = 7;
-
-// 	/* create new TCP PCB structure */
-// 	pcb = tcp_new();
-// 	if (!pcb) {
-// 		printf("Error creating PCB. Out of Memory\n\r");
-// 		return -1;
-// 	}
-
-// 	/* bind to specified @port */
-// 	err = tcp_bind(pcb, IP_ADDR_ANY, port);
-// 	if (err != ERR_OK) {
-// 		printf("Unable to bind to port %d: err = %d\n\r", port, err);
-// 		return -2;
-// 	}
-
-// 	/* we do not need any arguments to callback functions */
-// 	tcp_arg(pcb, NULL);
-
-// 	/* listen for connections */
-// 	pcb = tcp_listen(pcb);
-// 	if (!pcb) {
-// 		printf("Out of memory while tcp_listen\n\r");
-// 		return -3;
-// 	}
-
-// 	/* specify callback to use for incoming connections */
-// 	tcp_accept(pcb, tcp_accept_callback);
-
-// 	printf("TCP echo server started @ port %d\n\r", port);
-
-// 	return 0;
-// }
 
 
 // // udp

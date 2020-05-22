@@ -62,5 +62,5 @@ clean:
 	rm -f  *.hex *.coe *.bin *.elf.S
 	rm -vrf $(FIRMWARE_OBJS) $(TEST_OBJS)
 	rm -f *.o
-	rm -rf lwip/obj/*.o
+	rm -rf lwip141/obj/*.o
 # 	rm -f *.elf

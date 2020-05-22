@@ -82,12 +82,12 @@ module testbench;
          .PHY_TXCLK      (PHY_TXCLK),
          .PHY_TXD        (PHY_TXD),
          .PHY_TXCTL_TXEN (PHY_TXCTL_TXEN),
-         .PHY_TXER       (PHY_TXER)
+         .PHY_TXER       (PHY_TXER),
 
-         // .PHY_RXD        (PHY_RXD),
-         // .PHY_RXCTL_RXDV (PHY_RXCTL_RXDV),
-         // .PHY_RXER       (PHY_RXER),
-         // .PHY_RXCLK      (PHY_RXCLK)
+         .PHY_RXD        (PHY_RXD),
+         .PHY_RXCTL_RXDV (PHY_RXCTL_RXDV),
+         .PHY_RXER       (PHY_RXER),
+         .PHY_RXCLK      (PHY_RXCLK)
       );
 
    ge_eth inst_ge_eth
