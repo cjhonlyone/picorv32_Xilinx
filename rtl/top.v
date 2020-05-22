@@ -305,18 +305,18 @@ module top #
                      (uart_valid && uart_ready) ||
                      (DMA_valid && DMA_ready) ;
 							
-	// wire [35:0] CONTROL0;
-	// ICON ICON (
-	// 	 .CONTROL0(CONTROL0) // INOUT BUS [35:0]
-	// );
+// wire [35:0] CONTROL0;
+// ICON ICON0 (
+// .CONTROL0(CONTROL0) // INOUT BUS [35:0]
+// );
 
-	// ILA YourInstanceName (
-	// 	 .CONTROL(CONTROL0), // INOUT BUS [35:0]
-	// 	 .CLK(clk), // IN
-	// 	 .TRIG0(phy_txd), // IN BUS [7:0]
-	// 	 .TRIG1(phy_tx_en), // IN BUS [0:0]
-	// 	 .TRIG2(mem_addr) // IN BUS [31:0]
-	// );
+// ILA ILA0 (
+// .CONTROL(CONTROL0), // INOUT BUS [35:0]
+// .CLK(clk), // IN
+// .TRIG0(phy_txd), // IN BUS [7:0]
+// .TRIG1(phy_tx_en), // IN BUS [0:0]
+// .TRIG2(mem_addr) // IN BUS [31:0]
+// );
 
 
 endmodule
@@ -377,12 +377,16 @@ module RAM_128KB(
 
   reg ram_ready1, ram_ready2;
   reg mem_valid_reg;
+  reg [31:0] mem_addr_reg0;
+  reg [31:0] mem_addr_reg1;
 
   always @(posedge clk) begin
       if (!resetn) begin
         ram_ready2 <= 0;
         ram_ready1 <= 0;
         mem_valid_reg <= 0;
+        mem_addr_reg0 <= 0;
+        mem_addr_reg1 <= 0;
       end else begin
         if ((mem_valid == 1) && (mem_valid_reg == 0))
           ram_ready1 <= 1;
@@ -391,6 +395,8 @@ module RAM_128KB(
 
         mem_valid_reg <= mem_valid;
         ram_ready2 <= ram_ready1;
+        mem_addr_reg0 <= mem_addr;
+        mem_addr_reg1 <= mem_addr_reg0;
       end
   end
 
@@ -417,14 +423,14 @@ module RAM_128KB(
   end
 
   assign mem_rdata =
-              (mem_valid && (mem_addr[16:14] == 3'b000)) ? ram_rdata_0_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b001)) ? ram_rdata_1_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b010)) ? ram_rdata_2_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b011)) ? ram_rdata_3_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b100)) ? ram_rdata_4_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b101)) ? ram_rdata_5_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b110)) ? ram_rdata_6_reg0 : 
-              (mem_valid && (mem_addr[16:14] == 3'b111)) ? ram_rdata_7_reg0 : 32'h 0000_0000 ;
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b000)) ? ram_rdata_0_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b001)) ? ram_rdata_1_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b010)) ? ram_rdata_2_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b011)) ? ram_rdata_3_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b100)) ? ram_rdata_4_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b101)) ? ram_rdata_5_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b110)) ? ram_rdata_6_reg0 : 
+              (mem_valid && (mem_addr_reg1[16:14] == 3'b111)) ? ram_rdata_7_reg0 : 32'h 0000_0000 ;
 
 endmodule
 

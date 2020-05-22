@@ -1,5 +1,6 @@
 # SHELL := /bin/bash
-include lwip/Makefile
+lwip = lwip141
+include $(lwip)/Makefile
 
 ifneq ($(OS),Windows_NT)
 	TOOLCHAIN_PREFIX = /opt/newriscv32im/bin/riscv32-unknown-elf-
@@ -9,21 +10,19 @@ endif
 
 MAKE = make
 CCFLAGS = -march=rv32im -mabi=ilp32 -Wall -g
-FIRMWARE_OBJS = start.o main.o
+FIRMWARE_OBJS = start.o main.o echo.o
 
 MYLIBS_OBJS = mylib.o
 RAM_SIZE = 262144 #64*1024
 BLOCK_RAM_SIZE = 4096
 
-nPORT = lwip/contrib/ports/riscv
-nLWIP_DIR = lwip/lwip-1.4.1
-
+nPORT = $(lwip)/contrib/ports/riscv
+nLWIP_DIR = $(lwip)/lwip-1.4.1
 INCLUDES=-I$(nLWIP_DIR)/src/include \
 		-I$(nLWIP_DIR)/src/include/ipv4 \
 		-I$(nPORT)/include/arch \
 		-I$(nPORT)/include/netif \
 		-I$(nPORT)/include
-
 VPATH = $(nLWIP_DIR)/src/core/ $(nLWIP_DIR)/src/core/ipv4/ \
 	$(nLWIP_DIR)/src/core/ipv6 \
 	$(nLWIP_DIR)/src/core/snmp $(nLWIP_DIR)/src/netif \
@@ -53,7 +52,7 @@ start.o: start.S
 %.o: %.c
 	$(TOOLCHAIN_PREFIX)gcc -c $(CCFLAGS) $(INCLUDES) -Os -ffreestanding -nostdlib -o $@ $<
 
-lwip/obj/%.o: %.c $(LWIP_INCLUDEFILES)
+lwip141/obj/%.o: %.c $(LWIP_INCLUDEFILES)
 	$(TOOLCHAIN_PREFIX)gcc -c $(CCFLAGS) $(INCLUDES) -Os -ffreestanding -nostdlib -o $@ $<
 
 # lwip_lib: $(LWIP_OBJS)
