@@ -1,6 +1,8 @@
-# A Simple Soc with DMAC and Ethernet controller
+A Simple Soc with DMAC and Ethernet controller
+======================================
 
-## Introduction
+Introduction
+------------------------
 
 This is a repository for riscv learning. I want to implement the tcp protocol in some FPGAs without embedded ARM core, but it is too complicated to implement by verilog. So I chose a processor soft core to accomplish what I want. 
 
@@ -16,7 +18,8 @@ Features：
 
 ![image](https://github.com/cjhonlyone/Figurebed/raw/master/img/picorv32_xilinx.png)
 
-## How To Compile  
+How To Compile  
+------------------------
 
 ### download riscv-gnu-toolchain
 
@@ -69,7 +72,8 @@ make hw
 make hw_prog
 ```
 
-### Simulation
+Simulation
+---------------------------------
 
 ```bash
 # use iverilog for simulation
@@ -77,9 +81,12 @@ make hw_prog
 make hw_sim
 ```
 
-## DMA controllor  
+DMA controllor  
+---------------------------------
 
 I implemented a simple DMA controller with a ring buffer. When the C program pre-allocates several memory blocks for network reception, it will write start address of the memory to the address register of the DMAC. Once the network controller receives a frame and the ring buffer is not full, DMA will occupy the memory bus in the next processor idle cycle, and write data to the memory. DMAC will release the bus after the write operation is completed.
+
+![image](https://upload.wikimedia.org/wikipedia/commons/f/fd/Circular_Buffer_Animation.gif)
 
 In order to reduce the impact of the DMA occupying the bus on the execution of processor instructions. The memory space is divided into two parts, instruction space and heap space. The dynamically allocated memory is only allocated on the heap space, so DMA only occupies the heap memory bus, which reduces time processor waiting.
 
@@ -91,17 +98,20 @@ The DMA sending part also uses a ring buffer. But for programming simplicity, I 
 
 The first address of the data block for reception must be aligned with 4 bytes, but the data block will be sent does not need to be aligned with 4 bytes.
 
-## ethernet controllor
+ethernet controllor
+------------------------------
 
 There are two 4KB FIFOs inside, which convert gmii interface to AXI Stream interface for processor and DMA access.
 
-## FIFO UART
+FIFO UART
+----------------
 
 The original version used a UART without FIFO. The baud rate is much slower than processor. If you the last sent have not finished when writing a new ascii code, processor will be blocked until the new byte has been written successfully.
 
 Using FIFO UART can reduce the idle time of the processor and improve efficiency.
 
-## Utilization  
+Utilization 
+----------------
 
 |  ISE    |      |      |
 | :----: | :----: | :----: |
@@ -109,6 +119,8 @@ Using FIFO UART can reduce the idle time of the processor and improve efficiency
 |  Number of RAMB36E1s   |  36 out of 156    |   23%    |
 | Number of Slice Registers  |4389 out of  93,120|4%|
 
-## TODO
+TODO
+---------
+
 - interrupt controller
 - ...
