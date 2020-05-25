@@ -1088,8 +1088,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     mss = TCP_MSS;
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
     *opts = TCP_BUILD_MSS_OPTION(mss);
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("*opts: 0x%0x adr 0x%0x\n\n",*(u32_t*)opts,(u32_t*)opts));
-
     opts += 1;
   }
 #if LWIP_TCP_TIMESTAMPS

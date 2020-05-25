@@ -5,7 +5,7 @@
 
 #include "lwip/tcp.h"
 
-#include "echo.h"
+// #include "ping.h"
 // #include "lwip/udp.h"
 
 // int start_tcp_application();
@@ -75,6 +75,7 @@ int main()
 	
 	/* receive and process packets */
 	echo_init();
+	// ping_init();
 
 
 
@@ -128,6 +129,8 @@ int main()
 //     /* abort? output diagnostic? */
 //   }
 // }
+extern void
+ping_timeout(void *arg);
 
 uint32_t *irq(uint32_t *regs, uint32_t irqs)
 {
@@ -145,62 +148,6 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 		// tcp_tmr();
 		enable_timer(31250000);
 		timer_irq_count++;
-		// printf("[TIMER-IRQ]");
-		// *(volatile unsigned int*)0x80000000 = i;
-		// i++;
-		// enable_timer(125000000);
 	}
-
-	// if ((irqs & 6) != 0)
-	// {
-	// 	uint32_t pc = (regs[0] & 1) ? regs[0] - 3 : regs[0] - 4;
-	// 	uint32_t instr = *(uint16_t*)pc;
-
-	// 	if ((instr & 3) == 3)
-	// 		instr = instr | (*(uint16_t*)(pc + 2)) << 16;
-
-	// 	printf("\n------------------------------------------------------------\n");
-
-	// 	if ((irqs & 2) != 0) {
-	// 		if (instr == 0x00100073 || instr == 0x9002) {
-	// 			printf("EBREAK instruction at 0x%0x\n",pc);
-	// 		} else {
-	// 			printf("Illegal Instruction at 0x%0x: 0x%0x\n",pc, instr);
-	// 		}
-	// 	}
-
-	// 	if ((irqs & 4) != 0) {
-	// 		printf("Bus error in Instruction at 0x%0x: 0x%0x\n",pc, instr);
-	// 	}
-
-	// 	for (int i = 0; i < 8; i++)
-	// 	for (int k = 0; k < 4; k++)
-	// 	{
-	// 		int r = i + k*8;
-
-	// 		printf("regs[%02d] = %0x",r, regs[r]);
-	// 		if (k == 3)
-	// 			printf("\n");
-	// 		else
-	// 			printf(" ");
-	// 	}
-
-	// 	printf("------------------------------------------------------------\n");
-
-	// 	// printf("Number of fast external IRQs counted: ");
-	// 	// printf(ext_irq_4_count);
-	// 	// printf("\n");
-
-	// 	// printf("Number of slow external IRQs counted: ");
-	// 	// printf(ext_irq_5_count);
-	// 	// printf("\n");
-
-	// 	// printf("Number of timer IRQs counted: ");
-	// 	// printf(timer_irq_count);
-	// 	// printf("\n");
-
-	// 	__asm__ volatile ("ebreak");
-	// }
-
 	return regs;
 }

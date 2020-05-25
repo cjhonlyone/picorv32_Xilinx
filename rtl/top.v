@@ -64,11 +64,11 @@ module top #
     irq[5] <= rx_DMA_int;//buttons_i[1];
   end
 
-  wire        text_valid = mem_valid && (mem_addr < 32'h 0002_0000);
+  wire        text_valid = mem_valid && (mem_addr < 32'h 0001_0000);
   wire        text_ready;
   wire [31:0] text_rdata;
 
-  wire        heap_valid = mem_valid && (mem_addr > 32'h 0001_FFFF) && (mem_addr < 32'h 0004_0000);
+  wire        heap_valid = mem_valid && (mem_addr > 32'h 0000_FFFF) && (mem_addr < 32'h 0002_0000);
   wire        heap_ready;
   wire [31:0] heap_rdata;
 
@@ -102,7 +102,7 @@ module top #
   wire        BUS_valid;
   wire        BUS_ready;
 
-  RAM_128KB _text_RAM
+  RAM_64KB _text_RAM
     (
       .clk       (clk),
       .resetn    (resetn),
@@ -114,7 +114,7 @@ module top #
       .mem_rdata (text_rdata)
     );
 
-  RAM_128KB _heap_RAM
+  RAM_64KB _heap_RAM
     (
       .clk       (clk),
       .resetn    (resetn),
@@ -431,6 +431,87 @@ module RAM_128KB(
               (mem_valid && (mem_addr_reg1[16:14] == 3'b101)) ? ram_rdata_5_reg0 : 
               (mem_valid && (mem_addr_reg1[16:14] == 3'b110)) ? ram_rdata_6_reg0 : 
               (mem_valid && (mem_addr_reg1[16:14] == 3'b111)) ? ram_rdata_7_reg0 : 32'h 0000_0000 ;
+
+endmodule
+
+module RAM_64KB(
+  input clk, resetn,
+
+  input            mem_valid,
+  output           mem_ready,
+
+  input     [31:0] mem_addr,
+  input     [31:0] mem_wdata,
+  input     [ 3:0] mem_wstrb,
+  output    [31:0] mem_rdata
+);
+
+  wire [31:0] ram_rdata_0;
+  wire [31:0] ram_rdata_1;
+  wire [31:0] ram_rdata_2;
+  wire [31:0] ram_rdata_3;
+
+  ram_4k_32 _ram_4k_32_0(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_0, 
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b000)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_1(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_1, 
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b001)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_2(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_2, 
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b010)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+  ram_4k_32 _ram_4k_32_3(clk, mem_addr[13:2],
+    mem_wdata, ram_rdata_3, 
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b011)) ? mem_wstrb : 4'b0,
+    mem_valid && !mem_addr[31]);
+
+  reg ram_ready1, ram_ready2;
+  reg mem_valid_reg;
+  reg [31:0] mem_addr_reg0;
+  reg [31:0] mem_addr_reg1;
+
+  always @(posedge clk) begin
+      if (!resetn) begin
+        ram_ready2 <= 0;
+        ram_ready1 <= 0;
+        mem_valid_reg <= 0;
+        mem_addr_reg0 <= 0;
+        mem_addr_reg1 <= 0;
+      end else begin
+        if ((mem_valid == 1) && (mem_valid_reg == 0))
+          ram_ready1 <= 1;
+        if (ram_ready1)
+          ram_ready1 <= 0;
+
+        mem_valid_reg <= mem_valid;
+        ram_ready2 <= ram_ready1;
+        mem_addr_reg0 <= mem_addr;
+        mem_addr_reg1 <= mem_addr_reg0;
+      end
+  end
+
+  assign mem_ready = (|mem_wstrb == 1) ? ram_ready1 : ram_ready2;
+
+  reg [31:0] ram_rdata_0_reg0;
+  reg [31:0] ram_rdata_1_reg0;
+  reg [31:0] ram_rdata_2_reg0;
+  reg [31:0] ram_rdata_3_reg0;
+
+  always @(posedge clk) begin
+    ram_rdata_0_reg0 <= ram_rdata_0;
+    ram_rdata_1_reg0 <= ram_rdata_1;
+    ram_rdata_2_reg0 <= ram_rdata_2;
+    ram_rdata_3_reg0 <= ram_rdata_3;
+  end
+
+  assign mem_rdata =
+              (mem_valid && (mem_addr_reg1[15:14] == 2'b00)) ? ram_rdata_0_reg0 : 
+              (mem_valid && (mem_addr_reg1[15:14] == 2'b01)) ? ram_rdata_1_reg0 : 
+              (mem_valid && (mem_addr_reg1[15:14] == 2'b10)) ? ram_rdata_2_reg0 : 
+              (mem_valid && (mem_addr_reg1[15:14] == 2'b11)) ? ram_rdata_3_reg0 : 32'h 0000_0000 ;
 
 endmodule
 

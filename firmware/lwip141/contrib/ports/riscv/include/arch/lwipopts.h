@@ -44,13 +44,13 @@
 #define LWIP_TCP_KEEPALIVE 0
 
 #define MEM_ALIGNMENT 4
-#define MEM_SIZE (16*1024)
+#define MEM_SIZE (8*1024)
 
-#define MEMP_NUM_PBUF 64
+#define MEMP_NUM_PBUF 32
 #define MEMP_NUM_UDP_PCB 4
 #define MEMP_NUM_TCP_PCB 5
 #define MEMP_NUM_TCP_PCB_LISTEN 2
-#define MEMP_NUM_TCP_SEG 64
+#define MEMP_NUM_TCP_SEG 32
 
 
 #define MEMP_NUM_NETBUF 0
@@ -59,7 +59,7 @@
 // #define MEMP_NUM_TCPIP_MSG_INPKT 64
 #define MEMP_NUM_SYS_TIMEOUT 0
 
-#define PBUF_POOL_SIZE 48
+#define PBUF_POOL_SIZE 16
 #define PBUF_POOL_BUFSIZE 1700
 
 #define ETH_PAD_SIZE 0
@@ -124,7 +124,7 @@
 #define TCP_LISTEN_BACKLOG         1
 
 
-#define LWIP_DEBUG 1
+#define LWIP_DEBUG 0
 
 #ifdef LWIP_DEBUG
 

@@ -15,6 +15,8 @@ ADAPTER_INCLUDES = $(PORT)/include/arch/cc.h \
 ETHERNET_SRCS = $(PORT)/netif/riscvnetif.c\
            $(PORT)/netif/riscvdma.c
 
+SYSARCH_SOCKET_SRCS = $(PORT)/sys_arch.c
+
 ADAPTER_SRCS = $(COMMON_SRCS)
 ADAPTER_SRCS += $(ETHERNET_SRCS)
 

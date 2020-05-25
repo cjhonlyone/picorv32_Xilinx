@@ -282,7 +282,7 @@ ping_send(struct raw_pcb *raw, ip_addr_t *addr)
   pbuf_free(p);
 }
 
-static void
+void
 ping_timeout(void *arg)
 {
   struct raw_pcb *pcb = (struct raw_pcb*)arg;
@@ -303,6 +303,7 @@ ping_raw_init(void)
 
   raw_recv(ping_pcb, ping_recv, NULL);
   raw_bind(ping_pcb, IP_ADDR_ANY);
+
   sys_timeout(PING_DELAY, ping_timeout, ping_pcb);
 }
 

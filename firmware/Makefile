@@ -9,8 +9,8 @@ else
 endif
 
 MAKE = make
-CCFLAGS = -march=rv32im -mabi=ilp32 -Wall -g
-FIRMWARE_OBJS = start.o main.o echo.o
+CCFLAGS = -march=rv32im -mabi=ilp32 -Wall
+FIRMWARE_OBJS = start.o main.o lwip141/obj/echo.o
 
 MYLIBS_OBJS = mylib.o
 RAM_SIZE = 262144 #64*1024
@@ -22,11 +22,18 @@ INCLUDES=-I$(nLWIP_DIR)/src/include \
 		-I$(nLWIP_DIR)/src/include/ipv4 \
 		-I$(nPORT)/include/arch \
 		-I$(nPORT)/include/netif \
-		-I$(nPORT)/include
+		-I$(nPORT)/include \
+		-I$(lwip)/contrib/apps/tcpecho_raw
+
+$(LWIP_INCLUDEFILES)+=$(lwip)/contrib/apps/tcpecho_raw/echo.h
+
 VPATH = $(nLWIP_DIR)/src/core/ $(nLWIP_DIR)/src/core/ipv4/ \
 	$(nLWIP_DIR)/src/core/ipv6 \
 	$(nLWIP_DIR)/src/core/snmp $(nLWIP_DIR)/src/netif \
-	$(nPORT) $(nPORT)/netif
+	$(nPORT) $(nPORT)/netif \
+	$(lwip)/contrib/apps/tcpecho_raw
+
+
 
 firmware: firmware.bin
 	python3 makehex.py $< $(RAM_SIZE) $(BLOCK_RAM_SIZE) #> $(addsuffix _B0.hex,$@)
@@ -38,7 +45,7 @@ firmware.bin: firmware.elf firmware.elf.S
 	chmod -x $@
 
 firmware.elf.S: firmware.elf
-	$(TOOLCHAIN_PREFIX)objdump $< -S -d > $@
+	$(TOOLCHAIN_PREFIX)objdump $< -s -d > $@
 
 firmware.elf: $(FIRMWARE_OBJS) $(MYLIBS_OBJS) $(LWIP_OBJ) sections.lds
 	$(TOOLCHAIN_PREFIX)gcc $(CCFLAGS) -Os -ffreestanding -nostdlib -o $@ \
