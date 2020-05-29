@@ -6,6 +6,7 @@ chip:
 	${ISE_DIR}/ngdbuild -p ${DEVICE} -bm ../rtl/chip.bmm -uc ../rtl/chip.ucf chip.ngc chip.ngd
 	${ISE_DIR}/map -w -timing -detail -p ${DEVICE} -o chip_map.ncd chip.ngd chip.pcf
 	${ISE_DIR}/par -w chip_map.ncd chip.ncd chip.pcf
+	${ISE_DIR}/trce -v 10 chip.ncd chip.pcf -xml chip.twx
 	${ISE_DIR}/bitgen -w chip.ncd chip.bit chip.pcf
 
 #prog: data
@@ -48,5 +49,6 @@ clean:
 	rm -f chip.xise chip.gise *.html *.log
 	rm -rf iseconfig
 	rm -rf *.xdl
+	rm -rf *.twr *.twx
 # 	rm -f chip_bd.bmm
 # 	rm -f *.bit

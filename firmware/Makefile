@@ -13,7 +13,7 @@ CCFLAGS = -march=rv32im -mabi=ilp32 -Wall
 FIRMWARE_OBJS = start.o main.o lwip141/obj/echo.o
 
 MYLIBS_OBJS = mylib.o
-RAM_SIZE = 262144 #64*1024
+RAM_SIZE = 131072 #64*1024
 BLOCK_RAM_SIZE = 4096
 
 nPORT = $(lwip)/contrib/ports/riscv
@@ -66,7 +66,7 @@ lwip141/obj/%.o: %.c $(LWIP_INCLUDEFILES)
 # 	cd lwip && $(MAKE) all
 
 clean:
-	rm -f  *.hex *.coe *.bin *.elf.S
+	rm -f  hex/*.hex *.coe *.bin *.elf.S
 	rm -vrf $(FIRMWARE_OBJS) $(TEST_OBJS)
 	rm -f *.o
 	rm -rf lwip141/obj/*.o

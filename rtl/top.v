@@ -37,6 +37,7 @@ module top #
   reg [31:0] irq;
   
   picorv32 #(
+    // .TWO_CYCLE_ALU(1),
     .ENABLE_REGS_DUALPORT(1),
     .COMPRESSED_ISA(0),
     .ENABLE_MUL(1),
@@ -574,15 +575,20 @@ module bram_4k_8(
 );
   (* ram_style = "block" *)
   reg [7:0] mem[0:4095];
-  reg [11:0] addr1;
 
-  always @(posedge clk)
-    if (en) begin
-      addr1 <= addr;
-      if (we)
-        mem[addr] <= din;
-    end      
-
-  assign dout = mem[addr1];
+  reg [7:0] dout;
+    always @(posedge clk)
+    begin
+        if (en)
+        begin
+            if (we)
+            begin
+                mem[addr] <= din;
+                dout <= din;
+            end
+            else
+                dout <= mem[addr];
+        end
+    end
 
 endmodule
