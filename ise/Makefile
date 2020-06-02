@@ -1,4 +1,4 @@
-DEVICE=xc7k325t-2ffg900
+DEVICE=xc6vlx75t-1ff484
 ISE_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/bin/nt64
 
 chip:
