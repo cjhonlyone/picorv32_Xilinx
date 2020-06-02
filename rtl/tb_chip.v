@@ -117,10 +117,10 @@ module testbench;
       reset_async = 1;
       $write("reset finished\n");
 
-      // repeat (500000) @(posedge clk);
-      // repeat (500000) @(posedge clk);
+      repeat (500000) @(posedge clk);
+      repeat (500000) @(posedge clk);
       
-      repeat (1000) @(posedge clk);
+      // repeat (1000) @(posedge clk);
 
       $finish;
    end

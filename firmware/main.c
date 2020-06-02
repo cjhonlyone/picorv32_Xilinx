@@ -75,6 +75,7 @@ int main()
 	
 	/* receive and process packets */
 	echo_init();
+	printf("tcp bind port 7");
 	// ping_init();
 
 
@@ -137,10 +138,11 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 	// static unsigned int ext_irq_4_count = 0;
 	// static unsigned int ext_irq_5_count = 0;
 	
-	// printf("irq\n");
-
+	
+	// printf("irqs 0x%08x\n",irqs);
 	if ((irqs & (1<<5)) != 0) {
 		dma_rx_irq(echo_netif);
+		// printf("dma_rx_irq\n");
 		// printf("[EXT-IRQ-5]");
 	}
 

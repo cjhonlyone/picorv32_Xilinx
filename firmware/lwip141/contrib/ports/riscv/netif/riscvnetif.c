@@ -168,8 +168,8 @@ low_level_output(struct netif *netif, struct pbuf *p)
 
     tx_BD_sta = 1;
     while(tx_BD_sta ==  1);
-    LWIP_DEBUGF(NETIF_DEBUG, ("low_level_output q 0x%0x payload 0x%0x len %d\n", (void*)q,
-        (u32_t *)q->payload, q->len));
+    // LWIP_DEBUGF(NETIF_DEBUG, ("low_level_output q 0x%0x payload 0x%0x len %d\n", (void*)q,
+    //     (u32_t *)q->payload, q->len));
 
     // u8_t* ptr = (u8_t *)q->payload;
     // for (int j = 0;j <q->len;j=j+4)
