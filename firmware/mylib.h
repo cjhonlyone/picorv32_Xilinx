@@ -19,8 +19,8 @@
 
 #define heap_base_adr 64*1024
 
-#define UART_DIV   0x80000004
-#define UART_DATA  0x80000008
+#define UART_DIV   0x80020004
+#define UART_DATA  0x80020008
 
 uint32_t *irq(uint32_t *regs, uint32_t irqs);
 
