@@ -1,4 +1,4 @@
-DEVICE=xc7z020-2clg400
+DEVICE=xc7k325tffg900-2
 Vivado_DIR=/cygdrive/d/Xilinx/Vivado/2017.4/bin
 
 
@@ -7,6 +7,9 @@ chip: chip_syn chip_mmi
 
 chip_syn: chip.tcl
 	${Vivado_DIR}/vivado -mode tcl -source chip.tcl
+
+chip_gui: chip_prj.tcl
+	${Vivado_DIR}/vivado -mode tcl -source chip_prj.tcl
 
 chip_mmi: 
 	${Vivado_DIR}/updatemem --debug --force --meminfo top.mmi \
@@ -21,3 +24,4 @@ clean:
 	rm -rf *.jou *.log *.html *.xml *dmp
 	rm -rf *.bit
 	rm -rf *.mmi
+	rm -rf riscv_picorv32

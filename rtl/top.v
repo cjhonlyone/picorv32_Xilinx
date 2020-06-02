@@ -65,23 +65,23 @@ module top #
     irq[5] <= rx_DMA_int;//buttons_i[1];
   end
 
-  wire        text_valid = mem_valid && (mem_addr < 32'h 0001_0000);
+  wire        text_valid = mem_valid && (mem_addr[31:16] == 16'h0000);
   wire        text_ready;
   wire [31:0] text_rdata;
 
-  wire        heap_valid = mem_valid && (mem_addr > 32'h 0000_FFFF) && (mem_addr < 32'h 0002_0000);
+  wire        heap_valid = mem_valid && (mem_addr[31:16] == 16'h0001);
   wire        heap_ready;
   wire [31:0] heap_rdata;
 
-  wire        io_valid = mem_valid && (mem_addr == 32'h 8000_0000);
+  wire        io_valid = mem_valid && (mem_addr[31:16] == 16'h8001);
   wire        io_ready;
   wire [31:0] io_rdata;
 
-  wire        DMA_valid = mem_valid && (mem_addr >= 32'h 8000_0040) && (mem_addr < 32'h 8000_00D0);
+  wire        DMA_valid = mem_valid && (mem_addr[31:16] == 16'h8000);
   wire        DMA_ready;
   wire [31:0] DMA_rdata;
 
-  wire        uart_valid = mem_valid && (mem_addr >= 32'h 8000_0004) && (mem_addr < 32'h 8000_000C);
+  wire        uart_valid = mem_valid && (mem_addr[31:16] == 16'h8002);
   wire        uart_ready;
   wire [31:0] uart_rdata;
 
@@ -569,14 +569,12 @@ module bram_4k_8(
   input clk,
   input [11:0] addr,
   input [7:0] din,
-  output [7:0] dout,
+  output reg [7:0] dout,
   input we,
   input en
 );
   (* ram_style = "block" *)
   reg [7:0] mem[0:4095];
-
-  reg [7:0] dout;
     always @(posedge clk)
     begin
         if (en)

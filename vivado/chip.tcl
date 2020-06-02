@@ -2,7 +2,7 @@
 #
 set outputDir ./_output
 set top_module chip
-set DEVICE xc7z020clg400-2
+set DEVICE xc7k325tffg900-2
 
 file mkdir $outputDir
 
@@ -12,8 +12,9 @@ set_param general.maxThreads 8
 # STEP#2: setup design sources and constraints
 #
 # read_vhdl -library bftLib [ glob ./Sources/hdl/bftLib/*.vhdl ]
-read_verilog [ glob ../ise/*.v ]
 read_verilog [ glob ../rtl/*.v ]
+read_verilog [ glob ../rtl/eth/*.v ]
+read_verilog [ glob ../rtl/uart/*.v ]
 
 read_xdc ./chip.xdc 
 read_xdc ./chip_mmi.xdc
@@ -64,7 +65,7 @@ route_design
 #
 write_bitstream -force $outputDir/$top_module.bit
 
-set_property PART xc7z020clg400-2 [current_project]
+set_property PART xc7k325tffg900-2 [current_project]
 
 source ./write_mmi.tcl
 

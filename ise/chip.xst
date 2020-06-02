@@ -4,4 +4,4 @@ run
 -ofn chip.ngc
 -ifmt Verilog
 -top chip
--p xc6vlx75t-1ff484
+-p xc7k325t-2ffg900

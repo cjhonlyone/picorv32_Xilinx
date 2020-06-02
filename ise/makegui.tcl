@@ -1,10 +1,10 @@
 # create and open the project and set project-level properties
 # DEVICE=xc6vlx75t-1ffg484
 project new chip.xise
-project set family Virtex6
-project set device xc6vlx75t
-project set package ff484
-project set speed -1
+project set family zynq
+project set device xc7k325t
+project set package ffg900
+project set speed -2
 # add all the source HDLs and ucf
 xfile add ../rtl/chip.v
 xfile add ../rtl/picorv32.v ../rtl/top.v  ../rtl/DMAC.v

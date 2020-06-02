@@ -37,7 +37,7 @@ module uart_top #(
 		end else begin
 			mem_ready <= 0;
 			transmit <= 0;
-			if (mem_valid && !mem_ready && (mem_addr[31:8] == 24'h800000)) begin
+			if (mem_valid && !mem_ready && (mem_addr[31:8] == 24'h800200)) begin
 				mem_ready <= tx_fifo_full ? 0 : 1;
 				transmit <= tx_fifo_full ? 0 : 1;
 				// rx_BD_adr
