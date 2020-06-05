@@ -454,20 +454,20 @@ module RAM_64KB(
 
   ram_4k_32 _ram_4k_32_0(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_0, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b000)) ? mem_wstrb : 4'b0,
-    mem_valid && !mem_addr[31]);
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b00)) ? mem_wstrb : 4'b0,
+    mem_valid);
   ram_4k_32 _ram_4k_32_1(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_1, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b001)) ? mem_wstrb : 4'b0,
-    mem_valid && !mem_addr[31]);
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b01)) ? mem_wstrb : 4'b0,
+    mem_valid);
   ram_4k_32 _ram_4k_32_2(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_2, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b010)) ? mem_wstrb : 4'b0,
-    mem_valid && !mem_addr[31]);
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b10)) ? mem_wstrb : 4'b0,
+    mem_valid);
   ram_4k_32 _ram_4k_32_3(clk, mem_addr[13:2],
     mem_wdata, ram_rdata_3, 
-    (mem_valid && !mem_ready && (mem_addr[15:14] == 3'b011)) ? mem_wstrb : 4'b0,
-    mem_valid && !mem_addr[31]);
+    (mem_valid && !mem_ready && (mem_addr[15:14] == 2'b11)) ? mem_wstrb : 4'b0,
+    mem_valid);
 
   reg ram_ready1, ram_ready2;
   reg mem_valid_reg;

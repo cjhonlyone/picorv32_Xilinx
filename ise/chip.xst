@@ -1,5 +1,4 @@
 run
--resource_sharing no
 -ifn ../rtl/chip.v
 -ofn chip.ngc
 -ifmt Verilog
