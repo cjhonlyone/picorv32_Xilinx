@@ -658,7 +658,7 @@ module picorv32 #(
 	reg instr_getq, instr_setq, instr_retirq, instr_maskirq, instr_waitirq, instr_timer;
 	wire instr_trap;
 
-	reg [regindex_bits-1:0] decoded_rd, decoded_rs1, decoded_rs2;
+	(*MAX_FANOUT = 15 *) reg [regindex_bits-1:0] decoded_rd, decoded_rs1, decoded_rs2;
 	reg [31:0] decoded_imm, decoded_imm_j;
 	reg decoder_trigger;
 	reg decoder_trigger_q;
@@ -2273,7 +2273,7 @@ module picorv32_pcpi_mul #(
 			mul_waiting <= !mul_start;
 		end else begin
 			mul_counter <= mul_counter - 1;
-			if (mul_counter == 5'd0) begin
+			if (mul_counter == 5'd2) begin
 				mul_finish <= 1;
 				mul_waiting <= 1;
 			end
@@ -3051,19 +3051,19 @@ module four_stage_signed_35x35_multiply(
 	// .A({1'b0,A[16:0]}), .B(B[34:17]));
 	// MULT_MACRO: Multiply Function implemented in a DSP48E
 	// 7 Series
-	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst0 (
 	.A(A[34:17]), .B(B[34:17]),.P(p0a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst1 (
 	.A({1'b0,A[16:0]}), .B({1'b0,B[16:0]}),.P(p1a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst2 (
 	.A(A[34:17]), .B({1'b0, B[16:0]}),.P(p2a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));
-	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(1),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
 	MULT_MACRO_inst3 (
 	.A({1'b0,A[16:0]}), .B(B[34:17]),.P(p3a),
 	.CE(1'b1),.RST(1'b0),.CLK(clock));

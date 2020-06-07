@@ -15,6 +15,8 @@ Features：
 - [ethernet controller](https://github.com/alexforencich/verilog-ethernet)
 - DMA controller
 - [FIFO UART](https://github.com/ptracton/UART_ECHO)
+- xc6vlx75t-1ff484    208MHz
+- xc7k325tffg900-2   333MHz
 
 ![image](https://github.com/cjhonlyone/Figurebed/raw/master/img/picorv32_xilinx.png)
 

@@ -3,6 +3,7 @@
 MAKE = make
 FIRMWAREDIR = firmware
 ISEPRJDIR = ise
+VIVADOPRJDIR = vivado
 VERILATOR = verilator
 # can not work
 # unisims_DIR=/cygdrive/d/Xilinx/14.7/ISE_DS/ISE/verilog/src/unisims
@@ -43,7 +44,7 @@ rtl/tb_chip.vvp: $(rtldir_FILES) $(glbl)
 		-o $@ rtl/tb_chip.v rtl/chip.v $(glbl)
 	chmod -x $@
 
-clean: sw_clean hw_clean hw_sim_clean
+clean: sw_clean hw_clean hw_sim_clean vivado_clean
 	rm -rf _xmsgs
 
 sw_clean:
@@ -51,6 +52,9 @@ sw_clean:
 
 hw_clean:
 	cd $(ISEPRJDIR) && $(MAKE) clean
+
+vivado_clean:
+	cd $(VIVADOPRJDIR) && $(MAKE) clean
 
 hw_sim_clean:
 	rm -rf rtl/testbench.vcd #testbench.gtkw

@@ -128,7 +128,7 @@
 
 #ifdef LWIP_DEBUG
 
-#define ETHARP_DEBUG               LWIP_DBG_STATE//     LWIP_DBG_ON
+#define ETHARP_DEBUG               LWIP_DBG_OFF//     LWIP_DBG_ON
 
 #define LWIP_DBG_MIN_LEVEL         0
 #define PPP_DEBUG                  LWIP_DBG_OFF
@@ -138,7 +138,7 @@
 #define API_LIB_DEBUG              LWIP_DBG_OFF
 #define API_MSG_DEBUG              LWIP_DBG_OFF
 #define TCPIP_DEBUG                LWIP_DBG_OFF
-#define NETIF_DEBUG                LWIP_DBG_ON // LWIP_DBG_ON
+#define NETIF_DEBUG                LWIP_DBG_TYPES_ON // LWIP_DBG_ON
 #define SOCKETS_DEBUG              LWIP_DBG_OFF
 #define DNS_DEBUG                  LWIP_DBG_OFF
 #define AUTOIP_DEBUG               LWIP_DBG_OFF

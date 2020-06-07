@@ -9,7 +9,7 @@ set_property -dict {LOC AD12 IOSTANDARD LVDS} [get_ports FCLKIN_P]
 set_property -dict {LOC AD11 IOSTANDARD LVDS} [get_ports FCLKIN_N]
 create_clock -period 8.000 -name clk_125mhz [get_ports FCLKIN_N]
 
-create_clock -period 4 -name clk CLK_OUT1
+# create_clock -period 2.5 -name clk CLK_OUT1
 
 # LEDs
 set_property -dict {LOC AB8  IOSTANDARD LVCMOS15 SLEW SLOW DRIVE 12} [get_ports {F_LED[0]}]

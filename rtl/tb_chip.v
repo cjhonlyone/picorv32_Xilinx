@@ -61,7 +61,7 @@ module testbench;
    );
 
    localparam ser_period = 10;
-   localparam ser_half_period = ser_period*2;
+   localparam ser_half_period = ser_period*2;//*5/8;
 
 	// Instantiate the Unit Under Test (UUT)
    chip #
@@ -118,7 +118,7 @@ module testbench;
       $write("reset finished\n");
 
       repeat (500000) @(posedge clk);
-      repeat (500000) @(posedge clk);
+      // repeat (500000) @(posedge clk);
       
       // repeat (1000) @(posedge clk);
 
@@ -372,7 +372,7 @@ module ge_eth(
          tx_axis_tkeep <= 0;
          tx_axis_tlast <= 0;
 
-         frame_length <= 32'd42;//{$random(seed)}%128+16;
+         frame_length <= {$random(seed)}%128+16;
          wait (tx_axis_tready == 1'b1);
          tx_axis_tvalid <= 0;
          tx_axis_tdata <= 0;
@@ -391,8 +391,8 @@ module ge_eth(
             end
 
             tx_axis_tvalid <= 1;
-            if (I == 0) begin          tx_axis_tdata <= 32'hffffffff;
-            end else if (I == 1) begin tx_axis_tdata <= 32'he000ffff;
+            if (I == 0) begin          tx_axis_tdata <= 32'h00350a00;
+            end else if (I == 1) begin tx_axis_tdata <= 32'he0000201;
             end else if (I == 2) begin tx_axis_tdata <= 32'hbda1684c;
             end else if (I == 3) begin tx_axis_tdata <= 32'h01000608;
             end else if (I == 4) begin tx_axis_tdata <= 32'h04060008;
@@ -422,7 +422,7 @@ module ge_eth(
       
 
       while(1) begin
-       # ($random(seed)%50000 + 50000)
+       # ($random(seed)%50000 + 50000);
       tx_frame();        
 
       end

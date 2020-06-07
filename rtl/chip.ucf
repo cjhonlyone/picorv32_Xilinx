@@ -5,8 +5,14 @@ NET "FCLKIN_N"		LOC=F17;
 NET "FPGA_RESET"	LOC=T17; # reset at low
 #TIMESPEC "TS_CLK_IN1" = PERIOD "CLK_IN1" 10.0 ns HIGH 50% INPUT_JITTER 100.0ps;
 
-NET "CLK_OUT1" TNM_NET = "clk";
-TIMESPEC TS_clk = PERIOD "clk" 5 ns HIGH 50%;
+NET "clk_200mhz" TNM_NET = "clk_200mhz";
+TIMESPEC TS_clk_200mhz = PERIOD "clk_200mhz" 2.5 ns HIGH 50%;
+
+NET "clk_125mhz" TNM_NET = "clk_125mhz";
+TIMESPEC TS_clk_125mhz = PERIOD "clk_125mhz" 8 ns HIGH 50%;
+
+TIMESPEC TS_wr =FROM clk_125mhz TO clk_200mhz TIG;
+TIMESPEC TS_rd =FROM clk_200mhz TO clk_125mhz TIG;
 
 NET "F_LED[0]"	LOC=A16  |  IOSTANDARD = LVCMOS25; # D8
 NET "F_LED[1]"	LOC=A17  |  IOSTANDARD = LVCMOS25; # D7

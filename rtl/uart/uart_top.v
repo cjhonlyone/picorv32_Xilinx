@@ -25,6 +25,8 @@ module uart_top #(
    
    wire       irq;
    wire       busy;
+
+   reg        mem_ready_r;
    
 
 	always @(posedge clk) begin
@@ -34,17 +36,31 @@ module uart_top #(
 			
 			tx_byte <= 8'hf;
 			transmit <= 0;
+
+			mem_ready_r <= 0;
 		end else begin
-			mem_ready <= 0;
+
+			if ((mem_valid == 1) && (tx_fifo_full == 0) && (mem_ready_r == 0)) begin
+				mem_ready_r <= 1;		
+				mem_ready <= 1;
+			end
+
+			if (mem_ready)
+				mem_ready <= 0;
+
+			if (mem_valid == 0)
+				mem_ready_r <= 0;	
+
 			transmit <= 0;
-			if (mem_valid && !mem_ready && (mem_addr[31:8] == 24'h800200)) begin
-				mem_ready <= tx_fifo_full ? 0 : 1;
-				transmit <= tx_fifo_full ? 0 : 1;
+			if ((mem_valid == 1) && (tx_fifo_full == 0) && (mem_ready_r == 0)) begin
+				// mem_ready <= tx_fifo_full ? 0 : 1;
+				transmit <= 1;
 				// rx_BD_adr
-				if (mem_addr[7:0] == {8'd4}) begin
+				if (mem_addr[7:2] == {6'd1}) begin
 					mem_rdata <= tx_byte;
 					if (mem_wstrb==4'hF) tx_byte <= mem_wdata;
-				end else if (mem_addr[7:0] == {8'd8}) begin
+				end
+				if (mem_addr[7:2] == {6'd2}) begin
 					mem_rdata <= rx_byte;
 					if (mem_wstrb==4'hF) tx_byte <= mem_wdata;
 				end

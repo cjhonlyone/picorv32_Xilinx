@@ -1,7 +1,7 @@
 module chip #
 (
-  parameter DMA_RX_INTERVAL = 32'd1249999,
-  parameter UART_BAUD       = 32'd271
+  parameter DMA_RX_INTERVAL = 32'd1999999,
+  parameter UART_BAUD       = 32'd434
 )(
   // input [31:0] test,
   input        FCLKIN_P,
@@ -25,17 +25,25 @@ module chip #
 );
 	wire LOCKED;
 
-  wire CLK_OUT1;
-  wire CLK_OUT2;
-  wire resetn;
+  wire clk_125mhz;
+  wire clk_200mhz;
+  wire resetn_125mhz;
+  wire resetn_200mhz;
 	dcm _pll(.CLK_IN1_P(FCLKIN_P),.CLK_IN1_N(FCLKIN_N),
-    .CLK_OUT1(CLK_OUT1), .CLK_OUT2(CLK_OUT2),.RESET(1'b0), .LOCKED(LOCKED)); 
+    .CLK_OUT1(clk_125mhz), .CLK_OUT2(clk_200mhz),.RESET(1'b0), .LOCKED(LOCKED)); 
 	 
-  reset_gen _reset_gen
+  reset_gen _reset_gen_125mhz
     (
-    .clk(CLK_OUT1), 
+    .clk(clk_125mhz), 
     .reset_async(FPGA_RESET & LOCKED), 
-    .resetn(resetn)
+    .resetn(resetn_125mhz)
+    );
+
+  reset_gen _reset_gen_200mhz
+    (
+    .clk(clk_200mhz), 
+    .reset_async(FPGA_RESET & LOCKED), 
+    .resetn(resetn_200mhz)
     );
 
   wire [1:0] led;
@@ -48,8 +56,12 @@ module chip #
   _top
     (
       // .test        (test),
-      .clk         (CLK_OUT1),
-      .resetn      (resetn),
+      .clk_125mhz         (clk_125mhz),
+      .resetn_125mhz      (resetn_125mhz),
+
+      .clk_200mhz         (clk_200mhz),
+      .resetn_200mhz      (resetn_200mhz),
+
       .led         ({led, F_LED[1:0]}),
       .rxd         (1'b1),
       .txd         (_tx),
@@ -149,7 +161,7 @@ module dcm
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKOUT0_USE_FINE_PS  ("FALSE"),
-    .CLKOUT1_DIVIDE       (20),
+    .CLKOUT1_DIVIDE       (5),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
