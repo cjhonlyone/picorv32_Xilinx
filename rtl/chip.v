@@ -4,47 +4,221 @@ module chip #
   parameter UART_BAUD       = 32'd434
 )(
   // input [31:0] test,
-  input        FCLKIN_P,
-  input        FCLKIN_N,
-  input        FPGA_RESET,
+  input        PL_CLK,
+  input        PL_RESET,
   output [3:0] F_LED,
 
-  output       PHY_RESET,
-  // output       PHY_INT,
+  input        phy_sgmii_rx_p,
+  input        phy_sgmii_rx_n,
+  output       phy_sgmii_tx_p,
+  output       phy_sgmii_tx_n,
 
-  output       PHY_TXC_GTXCLK,
-  output       PHY_TXCLK,
-  output [7:0] PHY_TXD,
-  output       PHY_TXCTL_TXEN,
-  output       PHY_TXER,
+  input        phy_sgmii_clk_p,
+  input        phy_sgmii_clk_n,
 
-  input  [7:0] PHY_RXD,
-  input        PHY_RXCTL_RXDV,
-  input        PHY_RXER,
-  input        PHY_RXCLK
+  output       phy_reset_n
 );
+
+  wire mmcm_locked_out; // sfp sync;
+  wire resetdone;
+
 	wire LOCKED;
 
-  wire clk_125mhz;
-  wire clk_200mhz;
-  wire resetn_125mhz;
-  wire resetn_200mhz;
-	dcm _pll(.CLK_IN1_P(FCLKIN_P),.CLK_IN1_N(FCLKIN_N),
-    .CLK_OUT1(clk_125mhz), .CLK_OUT2(clk_200mhz),.RESET(1'b0), .LOCKED(LOCKED)); 
+  wire clk_125mhz_int;
+  wire clk_200mhz_int;
+  (*MAX_FANOUT = 15 *) wire rst_125mhz_int = rst_125mhz;
+  (*MAX_FANOUT = 15 *) wire rst_200mhz_int = rst_200mhz;
+
+  wire rst_125mhz;
+  wire rst_200mhz;
+
+  // always @(posedge clk_125mhz_int) begin
+  //   rst_125mhz_int <= rst_125mhz;
+  // end
+
+  // always @(posedge clk_200mhz_int) begin
+  //   rst_200mhz_int <= rst_200mhz;
+  // end
+
+	dcm _pll(.CLK_IN1(PL_CLK),
+    .CLK_OUT1(clk_125mhz_int), .CLK_OUT2(clk_200mhz_int),.RESET(1'b0), .LOCKED(LOCKED)); 
 	 
   reset_gen _reset_gen_125mhz
     (
-    .clk(clk_125mhz), 
-    .reset_async(FPGA_RESET & LOCKED), 
-    .resetn(resetn_125mhz)
+    .clk(clk_125mhz_int), 
+    .reset_async(PL_RESET & LOCKED), 
+    .resetn(rst_125mhz)
     );
 
   reset_gen _reset_gen_200mhz
     (
-    .clk(clk_200mhz), 
-    .reset_async(FPGA_RESET & LOCKED), 
-    .resetn(resetn_200mhz)
+    .clk(clk_200mhz_int), 
+    .reset_async(PL_RESET & LOCKED),  //delay 3ms in main.c for sgmii sync
+    .resetn(rst_200mhz)
     );
+
+  // SGMII interface to PHY
+  wire         phy_gmii_clk_int;
+  wire         phy_gmii_rst_int;
+  wire         phy_gmii_clk_en_int = phy_gmii_rst_int;
+  wire [7:0]   phy_gmii_txd_int;
+  wire         phy_gmii_tx_en_int;
+  wire         phy_gmii_tx_er_int;
+  wire [7:0]   phy_gmii_rxd_int;
+  wire         phy_gmii_rx_dv_int;
+  wire         phy_gmii_rx_er_int;
+
+  wire         phy_sgmii_mgtrefclk;
+  wire         phy_sgmii_txoutclk;
+  wire         phy_sgmii_userclk2;
+
+  // IBUFDS_GTE2
+  // phy_sgmii_ibufds_mgtrefclk (
+  //     .CEB   (1'b0),
+  //     .I     (phy_sgmii_clk_p),
+  //     .IB    (phy_sgmii_clk_n),
+  //     .O     (phy_sgmii_mgtrefclk),
+  //     .ODIV2 ()
+  // );
+
+  // BUFG
+  // phy_sgmii_bufg_userclk2 (
+  //     .I     (phy_sgmii_txoutclk),
+  //     .O     (phy_sgmii_userclk2)
+  // );
+
+  assign phy_gmii_clk_int = phy_sgmii_userclk2;
+
+  reset_gen _reset_gen_sgmii
+    (
+    .clk            (phy_gmii_clk_int), 
+    .reset_async    (PL_RESET & LOCKED), 
+    .resetn         (phy_gmii_rst_int)
+    );
+
+  reg phy_gmii_rstn_int;
+  always @(posedge clk_125mhz_int) begin
+    phy_gmii_rstn_int <= ~phy_gmii_rst_int;
+  end
+
+  wire [15:0] pcspma_status_vector;
+
+  wire pcspma_status_link_status              = pcspma_status_vector[0];
+  wire pcspma_status_link_synchronization     = pcspma_status_vector[1];
+  wire pcspma_status_rudi_c                   = pcspma_status_vector[2];
+  wire pcspma_status_rudi_i                   = pcspma_status_vector[3];
+  wire pcspma_status_rudi_invalid             = pcspma_status_vector[4];
+  wire pcspma_status_rxdisperr                = pcspma_status_vector[5];
+  wire pcspma_status_rxnotintable             = pcspma_status_vector[6];
+  wire pcspma_status_phy_link_status          = pcspma_status_vector[7];
+  wire [1:0] pcspma_status_remote_fault_encdg = pcspma_status_vector[9:8];
+  wire [1:0] pcspma_status_speed              = pcspma_status_vector[11:10];
+  wire pcspma_status_duplex                   = pcspma_status_vector[12];
+  wire pcspma_status_remote_fault             = pcspma_status_vector[13];
+  wire [1:0] pcspma_status_pause              = pcspma_status_vector[15:14];
+
+  wire [4:0] pcspma_config_vector;
+
+  assign pcspma_config_vector[4] = 1'b0; // autonegotiation enable
+  assign pcspma_config_vector[3] = 1'b0; // isolate
+  assign pcspma_config_vector[2] = 1'b0; // power down
+  assign pcspma_config_vector[1] = 1'b0; // loopback enable
+  assign pcspma_config_vector[0] = 1'b0; // unidirectional enable
+
+  wire [15:0] pcspma_an_config_vector;
+
+  assign pcspma_an_config_vector[15]    = 1'b1;    // SGMII link status
+  assign pcspma_an_config_vector[14]    = 1'b1;    // SGMII Acknowledge
+  assign pcspma_an_config_vector[13:12] = 2'b01;   // full duplex
+  assign pcspma_an_config_vector[11:10] = 2'b10;   // SGMII speed
+  assign pcspma_an_config_vector[9]     = 1'b0;    // reserved
+  assign pcspma_an_config_vector[8:7]   = 2'b00;   // pause frames - SGMII reserved
+  assign pcspma_an_config_vector[6]     = 1'b0;    // reserved
+  assign pcspma_an_config_vector[5]     = 1'b0;    // full duplex - SGMII reserved
+  assign pcspma_an_config_vector[4:1]   = 4'b0000; // reserved
+  assign pcspma_an_config_vector[0]     = 1'b1;    // SGMII
+
+  wire         independent_clock = clk_200mhz_int;
+  //----------------------------------------------------------------------------
+  // internal signals used in this top level example design.
+  //----------------------------------------------------------------------------
+
+   // clock generation signals for tranceiver
+   wire         gtrefclk_bufg_out;
+   wire         txoutclk;                 // txoutclk from GT transceiver.
+   // wire         resetdone;                // To indicate that the GT transceiver has completed its reset cycle
+   wire         userclk;                  
+   wire         userclk2;                 
+
+
+   // An independent clock source used as the reference clock for an
+   // IDELAYCTRL (if present) and for the main GT transceiver reset logic.
+   wire         independent_clock_bufg;
+
+   // GMII signals
+   wire         gmii_isolate;             // internal gmii_isolate signal.
+   reg   [7:0]  gmii_txd_int;             // internal gmii_txd signal.
+   reg          gmii_tx_en_int;           // internal gmii_tx_en signal.
+   reg          gmii_tx_er_int;           // internal gmii_tx_er signal.
+   wire  [7:0]  gmii_rxd_int;             // internal gmii_rxd signal.
+   wire         gmii_rx_dv_int;           // internal gmii_rx_dv signal.
+   wire         gmii_rx_er_int;           // internal gmii_rx_er signal.
+   wire sgmii_clk_r , sgmii_clk_f;
+
+   
+   // Route independent_clock input through a BUFG
+   BUFG  bufg_independent_clock (
+      .I         (independent_clock),
+      .O         (independent_clock_bufg)
+   );
+
+  //----------------------------------------------------------------------------
+  // Instantiate the Core Block (core wrapper).
+  //----------------------------------------------------------------------------
+ gig_ethernet_pcs_pma_0  
+   core_wrapper_i
+   (
+
+      .gtrefclk_p              (phy_sgmii_clk_p),
+      .gtrefclk_n              (phy_sgmii_clk_n),
+      .gtrefclk_out            (),
+      .gtrefclk_bufg_out       (gtrefclk_bufg_out),
+      
+      .txp                     (phy_sgmii_tx_p),
+      .txn                     (phy_sgmii_tx_n),
+      .rxp                     (phy_sgmii_rx_p),
+      .rxn                     (phy_sgmii_rx_n),
+      .mmcm_locked_out         (mmcm_locked_out),
+      .userclk_out             (phy_sgmii_userclk),
+      .userclk2_out            (phy_sgmii_userclk2),
+      .rxuserclk_out           (),
+      .rxuserclk2_out          (phy_sgmii_rxuserclk2),
+      .independent_clock_bufg  (independent_clock_bufg),
+      .pma_reset_out           (),
+      .resetdone               (resetdone),
+      
+      .sgmii_clk_r             (sgmii_clk_r),
+      .sgmii_clk_f             (sgmii_clk_f),
+      .sgmii_clk_en            (),
+      .gmii_txd                (phy_gmii_txd_int),
+      .gmii_tx_en              (phy_gmii_tx_en_int),
+      .gmii_tx_er              (phy_gmii_tx_er_int),
+      .gmii_rxd                (phy_gmii_rxd_int),
+      .gmii_rx_dv              (phy_gmii_rx_dv_int),
+      .gmii_rx_er              (phy_gmii_rx_er_int),
+      .gmii_isolate            (),
+      .configuration_vector    (pcspma_config_vector),
+      .speed_is_10_100         (1'b0),
+      .speed_is_100            (1'b0),
+      .status_vector           (pcspma_status_vector),
+      .reset                   (phy_gmii_rstn_int),
+   
+
+      .signal_detect           (1'b1),
+      .gt0_qplloutclk_out      (),
+      .gt0_qplloutrefclk_out   ()
+      );
+
 
   wire [1:0] led;
   wire _tx;
@@ -56,32 +230,32 @@ module chip #
   _top
     (
       // .test        (test),
-      .clk_125mhz         (clk_125mhz),
-      .resetn_125mhz      (resetn_125mhz),
+      .clk_125mhz      (clk_125mhz_int),
+      .rst_125mhz      (rst_125mhz_int),
 
-      .clk_200mhz         (clk_200mhz),
-      .resetn_200mhz      (resetn_200mhz),
+      .clk_200mhz      (clk_200mhz_int),
+      .rst_200mhz      (rst_200mhz_int),
 
       .led         ({led, F_LED[1:0]}),
       .rxd         (1'b1),
       .txd         (_tx),
 
-      .phy_rx_clk  (PHY_RXCLK),
-      .phy_rxd     (PHY_RXD),
-      .phy_rx_dv   (PHY_RXCTL_RXDV),
-      .phy_rx_er   (PHY_RXER),
+      .phy_gmii_clk    (phy_gmii_clk_int),
+      .phy_gmii_rst    (phy_gmii_rst_int),
+      .phy_gmii_clk_en (phy_gmii_clk_en_int),
+      .phy_gmii_rxd    (phy_gmii_rxd_int),
+      .phy_gmii_rx_dv  (phy_gmii_rx_dv_int),
+      .phy_gmii_rx_er  (phy_gmii_rx_er_int),
+      .phy_gmii_txd    (phy_gmii_txd_int),
+      .phy_gmii_tx_en  (phy_gmii_tx_en_int),
+      .phy_gmii_tx_er  (phy_gmii_tx_er_int),
 
-      .phy_gtx_clk (PHY_TXC_GTXCLK),
-      .phy_tx_clk  (PHY_TXCLK),
-      .phy_txd     (PHY_TXD),
-      .phy_tx_en   (PHY_TXCTL_TXEN),
-      .phy_tx_er   (PHY_TXER),
-
-      .phy_reset_n (PHY_RESET)
+      .phy_reset_n     (phy_reset_n)
     );
 
   assign F_LED[3] = _tx;
   assign F_LED[2] = 0;
+  
 endmodule
 
 module reset_gen(
@@ -94,8 +268,8 @@ module reset_gen(
 
   always @(posedge clk) begin
     if (!reset_async)
-		x <= 8'hff;
-	 else
+      x <= 8'hff;
+    else
       x <= {x[6:0], 1'b0};
   end
     
@@ -106,8 +280,7 @@ endmodule
 //(* CORE_GENERATION_INFO = "dcm,clk_wiz_v3_6,{component_name=dcm,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=MMCM_ADV,num_out_clk=1,clkin1_period=8.000,clkin2_period=10.000,use_power_down=false,use_reset=true,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=MANUAL,manual_override=false}" *)
 module dcm
  (// Clock in ports
-  input         CLK_IN1_P,
-  input         CLK_IN1_N,
+  input         CLK_IN1,
   // Clock out ports
   output        CLK_OUT1,
   output        CLK_OUT2,
@@ -115,13 +288,15 @@ module dcm
   input         RESET,
   output        LOCKED
  );
-
-  // Input buffering
+ 
+ wire clkin1;
+ wire clkout0;
+ wire clkout1;
+ // Input buffering
   //------------------------------------
-  IBUFGDS clkin1_buf
-   (.O  (clkin1),
-    .I  (CLK_IN1_P),
-    .IB (CLK_IN1_N));
+  IBUFG clkin1_buf
+   (.O (clkin1),
+    .I (CLK_IN1));
 
 
   // Clocking primitive
@@ -147,14 +322,13 @@ module dcm
   wire        clkfbstopped_unused;
   wire        clkinstopped_unused;
 
-  MMCM_ADV
+  MMCME2_ADV
   #(.BANDWIDTH            ("OPTIMIZED"),
     .CLKOUT4_CASCADE      ("FALSE"),
-    .CLOCK_HOLD           ("FALSE"),
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT_F      (8.000),
+    .CLKFBOUT_MULT_F      (20.000),
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
     .CLKOUT0_DIVIDE_F     (8.000),
@@ -165,7 +339,7 @@ module dcm
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
-    .CLKIN1_PERIOD        (8.000),
+    .CLKIN1_PERIOD        (20.000),
     .REF_JITTER1          (0.010))
   mmcm_adv_inst
     // Output clocks
@@ -223,9 +397,6 @@ module dcm
    (.O   (CLK_OUT2),
     .I   (clkout1));
 
-
-
-
 endmodule
 
 `include "top.v"
@@ -246,6 +417,7 @@ endmodule
 `include "./eth/oddr.v"
 `include "./eth/ssio_sdr_in.v"
 `include "./eth/ssio_sdr_out.v"
+`include "./eth/eth_mac_1g_fifo.v"
 
 `include "./uart/uart.v"
 `include "./uart/uart_fifo.v"

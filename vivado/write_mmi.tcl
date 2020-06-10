@@ -8,13 +8,16 @@ proc write_mmi {cell_name} {
 	set proj [current_project]
 	set filename "${cell_name}.mmi"
 	set fileout [open $filename "w"]
-	set brams [split [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ BMEM.bram.* }] " "]
+	set text_brams [split [get_cells -hierarchical *_bram*/mem_reg] " "]
+	set heap_brams [split [get_cells -hierarchical *_bram*/mem_reg__0] " "]
+
+	set brams "$text_brams $heap_brams"
 	#isolate all BRAMs identified by cell_name
 	set cell_name_bram ""
 	for {set i 0} {$i < [llength $brams]} {incr i} {
-		if { [regexp -nocase "top" [lindex $brams $i]] } {
+		# if { [regexp -nocase "top" [lindex $brams $i]] } {
 			lappend cell_name_bram [lindex $brams $i]
-		}
+		# }
 	}
 	# set proc_found 0	
 	# set inst_path [split [get_cells -hierarchical -filter { NAME =~  "*${cell_name}*" } ] " "]

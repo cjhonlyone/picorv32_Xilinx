@@ -233,7 +233,7 @@ ethernetif_input(struct netif *netif)
     if (p == NULL) {
       return 0;
     }
-
+  LWIP_DEBUGF(NETIF_DEBUG, ("p->len 0x%0x\n", p->len));
     /* points to packet payload, which starts with an Ethernet header */
 
     // LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input input\n"));

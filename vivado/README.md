@@ -5,3 +5,11 @@
 #### make chip_syn run syn and impl
 #### make chip_mmi configure block ram with elf data
 #### make chip_prog program fpga.
+
+sfp => RJ45
+
+1g pcs pma ip
+
+sgmii
+
+zynq

@@ -7,28 +7,31 @@ module top #
     // input [31:0] test,
 
     input        clk_125mhz,
-    input        resetn_125mhz,
+    input        rst_125mhz,
 
     input        clk_200mhz,
-    input        resetn_200mhz,
+    input        rst_200mhz,
 
     output [3:0] led,
     input        rxd,
     output       txd,
 
-    input        phy_rx_clk,
-    input  [7:0] phy_rxd,
-    input        phy_rx_dv,
-    input        phy_rx_er,
-    output       phy_gtx_clk,
-    input        phy_tx_clk,
-    output [7:0] phy_txd,
-    output       phy_tx_en,
-    output       phy_tx_er,
+    /*
+     * Ethernet: 1000BASE-T SGMII
+     */
+    input        phy_gmii_clk,
+    input        phy_gmii_rst,
+    input        phy_gmii_clk_en,
+    input  [7:0] phy_gmii_rxd,
+    input        phy_gmii_rx_dv,
+    input        phy_gmii_rx_er,
+    output [7:0] phy_gmii_txd,
+    output       phy_gmii_tx_en,
+    output       phy_gmii_tx_er,
     output       phy_reset_n
 );
 
-  assign phy_reset_n = (resetn_125mhz == 0) ? 0 : 1;
+  assign phy_reset_n = (rst_125mhz == 0) ? 0 : 1;
 
   wire trap;
   wire mem_valid;
@@ -55,7 +58,7 @@ module top #
     .STACKADDR(32'h 0003_ffff)) 
   _picorv32(
     .clk(clk_200mhz),
-    .resetn(resetn_200mhz),
+    .resetn(rst_200mhz),
     .trap(trap),
     .mem_valid(mem_valid),
     .mem_instr(mem_instr),
@@ -156,7 +159,7 @@ module top #
   RAM_64KB _text_RAM
     (
       .clk       (clk_200mhz),
-      .resetn    (resetn_200mhz),
+      .resetn    (rst_200mhz),
       .mem_valid (text_valid),
       .mem_ready (text_ready),
       .mem_addr  (text_addr),
@@ -168,7 +171,7 @@ module top #
   RAM_64KB _heap_RAM
     (
       .clk       (clk_200mhz),
-      .resetn    (resetn_200mhz),
+      .resetn    (rst_200mhz),
       .mem_valid (mux_heap_valid),
       .mem_ready (mux_heap_ready),
       .mem_addr  (mux_heap_addr),
@@ -180,7 +183,7 @@ module top #
   IO _IO
     (
       .clk       (clk_200mhz),
-      .resetn    (resetn_200mhz),
+      .resetn    (rst_200mhz),
       .mem_valid (io_valid),
       .mem_ready (io_ready),
       .mem_addr  (io_addr),
@@ -193,7 +196,7 @@ module top #
    mux_heap _mux_heap
       (
          .clk            (clk_200mhz),
-         .resetn         (resetn_200mhz),
+         .resetn         (rst_200mhz),
 
          .mux_heap_valid (mux_heap_valid),
          .mux_heap_ready (mux_heap_ready),
@@ -240,7 +243,7 @@ module top #
    _DMAC
       (
          .clk            (clk_200mhz),
-         .resetn         (resetn_200mhz),
+         .resetn         (rst_200mhz),
          .mem_valid      (DMA_valid),
          .mem_ready      (DMA_ready),
          .mem_addr       (DMA_addr),
@@ -271,60 +274,124 @@ module top #
          // .tx_DMA_int     (tx_DMA_int)
       );
 
-    eth_mac_1g_gmii_fifo #(
-        .TARGET("XILINX"),
-        .IODDR_STYLE("IODDR"),
-        .CLOCK_INPUT_STYLE("BUFG"),
-        .ENABLE_PADDING(1),
-        .MIN_FRAME_LENGTH(64),
-        .AXIS_DATA_WIDTH(32),
-        .TX_FIFO_DEPTH(4096),
-        .TX_FRAME_FIFO(1),
-        .RX_FIFO_DEPTH(4096),
-        .RX_FRAME_FIFO(1)
-    )
-    eth_mac_inst (
-        .gtx_clk(clk_125mhz),
-        .gtx_rst(~resetn_125mhz),
-        .logic_clk(clk_200mhz),
-        .logic_rst(~resetn_200mhz),
+    // eth_mac_1g_gmii_fifo #(
+    //     .TARGET("XILINX"),
+    //     .IODDR_STYLE("IODDR"),
+    //     .CLOCK_INPUT_STYLE("BUFG"),
+    //     .ENABLE_PADDING(1),
+    //     .MIN_FRAME_LENGTH(64),
+    //     .AXIS_DATA_WIDTH(32),
+    //     .TX_FIFO_DEPTH(4096),
+    //     .TX_FRAME_FIFO(1),
+    //     .RX_FIFO_DEPTH(4096),
+    //     .RX_FRAME_FIFO(1)
+    // )
+    // _eth_mac_inst (
+    //     .gtx_clk(clk_125mhz),
+    //     .gtx_rst(~rst_125mhz),
+    //     .logic_clk(clk_200mhz),
+    //     .logic_rst(~rst_200mhz),
 
-        .tx_axis_tdata(tx_axis_tdata),
-        .tx_axis_tvalid(tx_axis_tvalid),
-        .tx_axis_tready(tx_axis_tready),
-        .tx_axis_tlast(tx_axis_tlast),
-        .tx_axis_tuser(tx_axis_tuser),
-        .tx_axis_tkeep(tx_axis_tkeep),
+    //     .tx_axis_tdata(tx_axis_tdata),
+    //     .tx_axis_tvalid(tx_axis_tvalid),
+    //     .tx_axis_tready(tx_axis_tready),
+    //     .tx_axis_tlast(tx_axis_tlast),
+    //     .tx_axis_tuser(tx_axis_tuser),
+    //     .tx_axis_tkeep(tx_axis_tkeep),
 
-        .rx_axis_tdata(rx_axis_tdata),
-        .rx_axis_tvalid(rx_axis_tvalid),
-        .rx_axis_tready(rx_axis_tready),
-        .rx_axis_tlast(rx_axis_tlast),
-        .rx_axis_tuser(rx_axis_tuser),
-        .rx_axis_tkeep(rx_axis_tkeep),
+    //     .rx_axis_tdata(rx_axis_tdata),
+    //     .rx_axis_tvalid(rx_axis_tvalid),
+    //     .rx_axis_tready(rx_axis_tready),
+    //     .rx_axis_tlast(rx_axis_tlast),
+    //     .rx_axis_tuser(rx_axis_tuser),
+    //     .rx_axis_tkeep(rx_axis_tkeep),
 
-        .gmii_rx_clk(phy_rx_clk),
-        .gmii_rxd(phy_rxd),
-        .gmii_rx_dv(phy_rx_dv),
-        .gmii_rx_er(phy_rx_er),
-        .gmii_tx_clk(phy_gtx_clk),
-        .mii_tx_clk(phy_tx_clk),
-        .gmii_txd(phy_txd),
-        .gmii_tx_en(phy_tx_en),
-        .gmii_tx_er(phy_tx_er),
+    //     .gmii_rx_clk(phy_rx_clk),
+    //     .gmii_rxd(phy_rxd),
+    //     .gmii_rx_dv(phy_rx_dv),
+    //     .gmii_rx_er(phy_rx_er),
+    //     .gmii_tx_clk(phy_gtx_clk),
+    //     .mii_tx_clk(phy_tx_clk),
+    //     .gmii_txd(phy_txd),
+    //     .gmii_tx_en(phy_tx_en),
+    //     .gmii_tx_er(phy_tx_er),
 
-        .tx_fifo_overflow(),
-        .tx_fifo_bad_frame(),
-        .tx_fifo_good_frame(),
-        .rx_error_bad_frame(),
-        .rx_error_bad_fcs(),
-        .rx_fifo_overflow(),
-        .rx_fifo_bad_frame(),
-        .rx_fifo_good_frame(),
-        .speed(),
+    //     .tx_fifo_overflow(),
+    //     .tx_fifo_bad_frame(),
+    //     .tx_fifo_good_frame(),
+    //     .rx_error_bad_frame(),
+    //     .rx_error_bad_fcs(),
+    //     .rx_fifo_overflow(),
+    //     .rx_fifo_bad_frame(),
+    //     .rx_fifo_good_frame(),
+    //     .speed(),
 
-        .ifg_delay(12)
-    );
+    //     .ifg_delay(12)
+    // );
+  reg phy_gmii_rstn;
+  always @(posedge phy_gmii_clk) begin
+    phy_gmii_rstn <= ~phy_gmii_rst;
+  end
+
+  reg rstn_200mhz;
+  always @(posedge clk_200mhz) begin
+    rstn_200mhz <= ~rst_200mhz;
+  end
+
+  eth_mac_1g_fifo #(
+      .ENABLE_PADDING(1),
+      .MIN_FRAME_LENGTH(64),
+      .AXIS_DATA_WIDTH(32),
+      .TX_FIFO_DEPTH(4096),
+      .TX_FRAME_FIFO(1),
+      .RX_FIFO_DEPTH(4096),
+      .RX_FRAME_FIFO(1)
+  )
+  eth_mac_inst (
+      .rx_clk(phy_gmii_clk),
+      .rx_rst(phy_gmii_rstn),
+      .tx_clk(phy_gmii_clk),
+      .tx_rst(phy_gmii_rstn),
+      .logic_clk(clk_200mhz),
+      .logic_rst(rstn_200mhz),
+
+      .tx_axis_tdata(tx_axis_tdata),
+      .tx_axis_tvalid(tx_axis_tvalid),
+      .tx_axis_tready(tx_axis_tready),
+      .tx_axis_tlast(tx_axis_tlast),
+      .tx_axis_tuser(tx_axis_tuser),
+      .tx_axis_tkeep(tx_axis_tkeep),
+
+      .rx_axis_tdata(rx_axis_tdata),
+      .rx_axis_tvalid(rx_axis_tvalid),
+      .rx_axis_tready(rx_axis_tready),
+      .rx_axis_tlast(rx_axis_tlast),
+      .rx_axis_tuser(rx_axis_tuser),
+      .rx_axis_tkeep(rx_axis_tkeep),
+
+      .gmii_rxd(phy_gmii_rxd),
+      .gmii_rx_dv(phy_gmii_rx_dv),
+      .gmii_rx_er(phy_gmii_rx_er),
+      .gmii_txd(phy_gmii_txd),
+      .gmii_tx_en(phy_gmii_tx_en),
+      .gmii_tx_er(phy_gmii_tx_er),
+
+      .rx_clk_enable(phy_gmii_clk_en),
+      .tx_clk_enable(phy_gmii_clk_en),
+      .rx_mii_select(1'b0),
+      .tx_mii_select(1'b0),
+
+      .tx_fifo_overflow(),
+      .tx_fifo_bad_frame(),
+      .tx_fifo_good_frame(),
+      .rx_error_bad_frame(),
+      .rx_error_bad_fcs(),
+      .rx_fifo_overflow(),
+      .rx_fifo_bad_frame(),
+      .rx_fifo_good_frame(),
+
+      .ifg_delay(12)
+  );
 // baud 115200
 // 250MHz 2170
 // 200MHz 1736
@@ -334,7 +401,7 @@ module top #
     ) 
   _uart_top (
       .clk       (clk_200mhz),
-      .resetn    (resetn_200mhz),
+      .resetn    (rst_200mhz),
       .mem_valid (uart_valid),
       .mem_ready (uart_ready),
       .mem_addr  (uart_addr),
@@ -620,10 +687,11 @@ module IO(
   output reg   [31:0] mem_rdata,
   output    [ 3:0] io
 );
-  assign io = io_int;
   
   reg [3:0] io_int;
   reg       mem_valid_reg;
+
+  assign io = io_int;
 
   always @(posedge clk) begin
     if (!resetn) begin

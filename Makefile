@@ -44,6 +44,9 @@ rtl/tb_chip.vvp: $(rtldir_FILES) $(glbl)
 		-o $@ rtl/tb_chip.v rtl/chip.v $(glbl)
 	chmod -x $@
 
+zprog: 
+	cd $(VIVADOPRJDIR) && $(MAKE) zprog
+
 clean: sw_clean hw_clean hw_sim_clean vivado_clean
 	rm -rf _xmsgs
 
