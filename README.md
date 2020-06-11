@@ -4,11 +4,14 @@ A Simple Soc with DMAC and Ethernet controller
 Branch
 ------------------------
 
-- **matser ** A simple Soc only with uart
-- **v6          ** Soc with DMAC and Ethmac(gmii)
+- **matser**   
+A simple Soc only with uart
+- **v6**   
+A Soc with DMAC and Ethmac(gmii)
 	- ise        dir **xc6vlx75t-1ff484@208MHz**
 	- vivado dir **xc7k325tffg900-2@333MHz**
-- **sgmii    ** Soc with DMAC and Ethmac(sgmii)
+- **sgmii**   
+A Soc with DMAC and Ethmac(sgmii)
 	- vivado dir **xc7k030fbg676-2@333MHz**
 
 Introduction
