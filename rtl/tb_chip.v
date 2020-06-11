@@ -62,7 +62,7 @@ module testbench;
    // );
 
    localparam ser_period = 10;
-   localparam ser_half_period = ser_period*2*5/20;
+   localparam ser_half_period = ser_period*2*3/20;
 
 	// Instantiate the Unit Under Test (UUT)
    // chip #

@@ -1,7 +1,7 @@
 module chip #
 (
-  parameter DMA_RX_INTERVAL = 32'd1999999,
-  parameter UART_BAUD       = 32'd434
+  parameter DMA_RX_INTERVAL = 32'd3329999,
+  parameter UART_BAUD       = 32'd723
 )(
   // input [31:0] test,
   input        PL_CLK,
@@ -26,35 +26,41 @@ module chip #
 
   wire clk_125mhz_int;
   wire clk_200mhz_int;
-  (*MAX_FANOUT = 15 *) wire rst_125mhz_int = rst_125mhz;
-  (*MAX_FANOUT = 15 *) wire rst_200mhz_int = rst_200mhz;
+  wire clk_250mhz_int;
 
-  wire rst_125mhz;
-  wire rst_200mhz;
+  (*MAX_FANOUT = 15 *) wire rst_125mhz_int;
+  (*MAX_FANOUT = 15 *) wire rst_200mhz_int;
+  (*MAX_FANOUT = 15 *) wire rst_250mhz_int;
 
-  // always @(posedge clk_125mhz_int) begin
-  //   rst_125mhz_int <= rst_125mhz;
-  // end
+  dcm inst_dcm
+    (
+      .CLK_IN1  (PL_CLK),
+      .CLK_OUT1 (clk_125mhz_int),
+      .CLK_OUT2 (clk_200mhz_int),
+      .CLK_OUT3 (clk_250mhz_int),
+      .RESET    (1'b0),
+      .LOCKED   (LOCKED)
+    );
 
-  // always @(posedge clk_200mhz_int) begin
-  //   rst_200mhz_int <= rst_200mhz;
-  // end
-
-	dcm _pll(.CLK_IN1(PL_CLK),
-    .CLK_OUT1(clk_125mhz_int), .CLK_OUT2(clk_200mhz_int),.RESET(1'b0), .LOCKED(LOCKED)); 
-	 
   reset_gen _reset_gen_125mhz
     (
     .clk(clk_125mhz_int), 
     .reset_async(PL_RESET & LOCKED), 
-    .resetn(rst_125mhz)
+    .resetn(rst_125mhz_int)
     );
 
   reset_gen _reset_gen_200mhz
     (
     .clk(clk_200mhz_int), 
     .reset_async(PL_RESET & LOCKED),  //delay 3ms in main.c for sgmii sync
-    .resetn(rst_200mhz)
+    .resetn(rst_200mhz_int)
+    );
+
+  reset_gen _reset_gen_250mhz
+    (
+    .clk(clk_250mhz_int), 
+    .reset_async(PL_RESET & LOCKED),  //delay 3ms in main.c for sgmii sync
+    .resetn(rst_250mhz_int)
     );
 
   // SGMII interface to PHY
@@ -233,8 +239,8 @@ module chip #
       .clk_125mhz      (clk_125mhz_int),
       .rst_125mhz      (rst_125mhz_int),
 
-      .clk_200mhz      (clk_200mhz_int),
-      .rst_200mhz      (rst_200mhz_int),
+      .clk_200mhz      (clk_250mhz_int),
+      .rst_200mhz      (rst_250mhz_int),
 
       .led         ({led, F_LED[1:0]}),
       .rxd         (1'b1),
@@ -284,6 +290,7 @@ module dcm
   // Clock out ports
   output        CLK_OUT1,
   output        CLK_OUT2,
+  output        CLK_OUT3,
   // Status and control signals
   input         RESET,
   output        LOCKED
@@ -292,6 +299,7 @@ module dcm
  wire clkin1;
  wire clkout0;
  wire clkout1;
+ wire clkout2;
  // Input buffering
   //------------------------------------
   IBUFG clkin1_buf
@@ -312,7 +320,6 @@ module dcm
   wire        clkfboutb_unused;
   wire        clkout0b_unused;
   wire        clkout1b_unused;
-  wire        clkout2_unused;
   wire        clkout2b_unused;
   wire        clkout3_unused;
   wire        clkout3b_unused;
@@ -331,14 +338,22 @@ module dcm
     .CLKFBOUT_MULT_F      (20.000),
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
+
     .CLKOUT0_DIVIDE_F     (8.000),
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKOUT0_USE_FINE_PS  ("FALSE"),
+
     .CLKOUT1_DIVIDE       (5),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
+
+    .CLKOUT2_DIVIDE       (3),
+    .CLKOUT2_PHASE        (0.000),
+    .CLKOUT2_DUTY_CYCLE   (0.500),
+    .CLKOUT2_USE_FINE_PS  ("FALSE"),
+
     .CLKIN1_PERIOD        (20.000),
     .REF_JITTER1          (0.010))
   mmcm_adv_inst
@@ -349,7 +364,7 @@ module dcm
     .CLKOUT0B            (clkout0b_unused),
     .CLKOUT1             (clkout1),
     .CLKOUT1B            (clkout1b_unused),
-    .CLKOUT2             (clkout2_unused),
+    .CLKOUT2             (clkout2),
     .CLKOUT2B            (clkout2b_unused),
     .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
@@ -392,10 +407,13 @@ module dcm
    (.O   (CLK_OUT1),
     .I   (clkout0));
 
-
   BUFG clkout2_buf
    (.O   (CLK_OUT2),
     .I   (clkout1));
+
+  BUFG clkout3_buf
+   (.O   (CLK_OUT3),
+    .I   (clkout2));
 
 endmodule
 

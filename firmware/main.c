@@ -18,6 +18,7 @@ static struct udp_pcb *udpecho_raw_pcb;
 void udpecho_raw_init(void);
 #endif 
 
+#define CPU_FREQ_HZ 333333333
 static volatile unsigned int timer_irq_count = 0;
 
 // struct netif echo_netif_t;
@@ -26,8 +27,8 @@ static struct netif server_netif;
 struct netif *echo_netif;
 struct mymac *mymac_s;
 
-void delay(int m)
-{ int i;
+void delay(unsigned int m) // delay(1) 39 clock period 117ns
+{ unsigned int i;
   for (i=0; i<m; i++) {
     asm volatile("nop"); } }
 	
@@ -37,47 +38,34 @@ int main()
 { 
 
 	// err_t udpsenderr;
+	// delay(25641);
 	// ENABLE_DMA = 1; 
 	// rx_BD_adr_0 = 0x00018368; 
 
-	// *((u32_t *)(0x00015368))=0xe000ffff; //2
-	// *((u32_t *)(0x0001536C))=0xbda1684c; 
-	// *((u32_t *)(0x00015370))=0x00350a00; 
-	// *((u32_t *)(0x00015374))=0x00080201; 
-	// *((u32_t *)(0x00015378))=0x2c000045; 
-	// *((u32_t *)(0x0001537C))=0x00000000; 
-	// *((u32_t *)(0x00015380))=0xf03706ff; 
-	// *((u32_t *)(0x00015384))=0x0a01a8c0; 
-	// *((u32_t *)(0x00015388))=0x8101a8c0; 
-	// *((u32_t *)(0x0001538C))=0xb0630700; 
-	// *((u32_t *)(0x00015390))=0x7c190000; 
-	// *((u32_t *)(0x00015394))=0xfd5b86c6; 
-	// *((u32_t *)(0x00015398))=0x60081260; 
-	// *((u32_t *)(0x0001539C))=0x0000e76f; 
-	// *((u32_t *)(0x000153a0))=0xf0010402; 
- 	
- // 	*((u32_t *)(0x000153a4))=0xf03706ff; 
+	// uint32_t j;
+	// for (j = 0;j < 1500; j ++)
+	// 	*((u8_t *)(0x00015368 + j))=j & 0x000000ff; //2
 
  //    tx_BD_adr_0 = 0x00015368; 
- //    tx_BD_len_0 = 58; 
+ //    tx_BD_len_0 = 1500; 
  
  //    tx_BD_sta = 1; 
  //    while(tx_BD_sta ==  1); 
 
  //    tx_BD_adr_0 = 0x00015369; 
- //    tx_BD_len_0 = 58; 
+ //    tx_BD_len_0 = 1500; 
  
  //    tx_BD_sta = 1; 
  //    while(tx_BD_sta ==  1); 
 
  //    tx_BD_adr_0 = 0x0001536a; 
- //    tx_BD_len_0 = 58; 
+ //    tx_BD_len_0 = 1500; 
  
  //    tx_BD_sta = 1; 
  //    while(tx_BD_sta ==  1); 
 
  //    tx_BD_adr_0 = 0x0001536b; 
- //    tx_BD_len_0 = 58; 
+ //    tx_BD_len_0 = 1500; 
  
  //    tx_BD_sta = 1; 
  //    while(tx_BD_sta ==  1); 
@@ -85,10 +73,7 @@ int main()
 
 	printf("system booting .......................\n");
 
-	// for (int j = 0;j < 8000;j++)
-	// {
-	// 	delay(4000);
-	// }
+	delay(35641);
 
 
 	/* the mac address of the board. this should be unique per board */
@@ -133,7 +118,7 @@ int main()
 
 
 	long time_ = time();
-	enable_timer(50000000);
+	enable_timer(CPU_FREQ_HZ/4);
 	
 	uint32_t kk = 0;
 
@@ -203,7 +188,7 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 
 	if ((irqs & 1) != 0) {
 		// tcp_tmr();
-		enable_timer(50000000);
+		enable_timer(CPU_FREQ_HZ/4);
 		// printf("timer %d\n",timer_/irq_count);
 		timer_irq_count++;
 	}

@@ -53,7 +53,7 @@ get_files -all -of_objects [get_files *gig_ethernet_pcs_pma_0.xci]
 
 read_xdc ./chip.xdc 
 read_xdc ./chip_mmi.xdc
-read_xdc ./axis_async_fifo.tcl
+read_xdc -unmanaged ./axis_async_fifo.tcl
 
 #
 # STEP#3: run synthesis, write design checkpoint, report timing,
@@ -90,7 +90,7 @@ phys_opt_design
 # status, report timing, power, and DRC, and finally save the Verilog netlist.
 #
 route_design
-# write_checkpoint -force $outputDir/post_route.dcp
+write_checkpoint -force $outputDir/post_route.dcp
 report_route_status -file $outputDir/post_route_status.rpt
 report_timing_summary -file $outputDir/post_route_timing_summary.rpt
 # report_power -file $outputDir/post_route_power.rpt
