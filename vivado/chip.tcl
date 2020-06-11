@@ -54,7 +54,7 @@ get_files -all -of_objects [get_files *gig_ethernet_pcs_pma_0.xci]
 read_xdc ./chip.xdc 
 read_xdc ./chip_mmi.xdc
 read_xdc -unmanaged ./axis_async_fifo.tcl
-
+read_xdc -unmanaged ./eth_mac_fifo.tcl
 #
 # STEP#3: run synthesis, write design checkpoint, report timing,
 # and utilization estimates
