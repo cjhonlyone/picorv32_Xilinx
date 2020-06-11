@@ -6,9 +6,10 @@ Branch
 
 - **matser**   
 A simple Soc only with uart
+	- ise dir **xc3s500e-4vq100@50MHz**
 - **v6**   
 A Soc with DMAC and Ethmac(gmii)
-	- ise        dir **xc6vlx75t-1ff484@208MHz**
+	- ise dir **xc6vlx75t-1ff484@208MHz**
 	- vivado dir **xc7k325tffg900-2@333MHz**
 - **sgmii**   
 A Soc with DMAC and Ethmac(sgmii)
