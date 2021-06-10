@@ -17,6 +17,11 @@
  *
  */
 
+/* verilator lint_off WIDTH */
+/* verilator lint_off PINMISSING */
+/* verilator lint_off CASEOVERLAP */
+/* verilator lint_off CASEINCOMPLETE */
+// `include "tb_chip.v"
 `timescale 1 ns / 1 ps
 // `default_nettype none
 // `define DEBUGNETS
@@ -24,16 +29,10 @@
 // `define DEBUGASM
 // `define DEBUG
 
-`define XILINX_ISE_14_7
-
 `ifdef DEBUG
   `define debug(debug_command) debug_command
 `else
-  `ifndef XILINX_ISE_14_7
-    `define debug(debug_command)
-  `else
-    `define debug(debug_command) $display("foo");
-  `endif
+  `define debug(debug_command)
 `endif
 
 `ifdef FORMAL
@@ -45,12 +44,16 @@
   `else
     `define FORMAL_KEEP
   `endif
-  `ifndef XILINX_ISE_14_7
-    `define assert(assert_expr) empty_statement
-  `else
-    `define assert(assert_expr) $display("foo")
-  `endif
+  `define assert(assert_expr) empty_statement
 `endif
+
+// uncomment this for register file in extra module
+// `define PICORV32_REGS picorv32_regs
+
+// this macro can be used to check if the verilog files in your
+// design are read in the correct order.
+`define PICORV32_V
+
 
 /***************************************************************
  * picorv32
@@ -66,14 +69,14 @@ module picorv32 #(
 	parameter [ 0:0] BARREL_SHIFTER = 0,
 	parameter [ 0:0] TWO_CYCLE_COMPARE = 0,
 	parameter [ 0:0] TWO_CYCLE_ALU = 0,
-	parameter [ 0:0] COMPRESSED_ISA = 1,
+	parameter [ 0:0] COMPRESSED_ISA = 0,
 	parameter [ 0:0] CATCH_MISALIGN = 1,
 	parameter [ 0:0] CATCH_ILLINSN = 1,
 	parameter [ 0:0] ENABLE_PCPI = 0,
-	parameter [ 0:0] ENABLE_MUL = 1,
+	parameter [ 0:0] ENABLE_MUL = 0,
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
-	parameter [ 0:0] ENABLE_DIV = 1,
-	parameter [ 0:0] ENABLE_IRQ = 1,
+	parameter [ 0:0] ENABLE_DIV = 0,
+	parameter [ 0:0] ENABLE_IRQ = 0,
 	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
 	parameter [ 0:0] ENABLE_TRACE = 0,
@@ -97,21 +100,21 @@ module picorv32 #(
 	input      [31:0] mem_rdata,
 
 	// Look-Ahead Interface
-	// output            mem_la_read,
-	// output            mem_la_write,
-	// output     [31:0] mem_la_addr,
-	// output reg [31:0] mem_la_wdata,
-	// output reg [ 3:0] mem_la_wstrb,
+	output            mem_la_read,
+	output            mem_la_write,
+	output     [31:0] mem_la_addr,
+	output reg [31:0] mem_la_wdata,
+	output reg [ 3:0] mem_la_wstrb,
 
 	// Pico Co-Processor Interface (PCPI)
-	// output reg        pcpi_valid,
-	// output reg [31:0] pcpi_insn,
-	// output     [31:0] pcpi_rs1,
-	// output     [31:0] pcpi_rs2,
-	// input             pcpi_wr,
-	// input      [31:0] pcpi_rd,
-	// input             pcpi_wait,
-	// input             pcpi_ready,
+	output reg        pcpi_valid,
+	output reg [31:0] pcpi_insn,
+	output     [31:0] pcpi_rs1,
+	output     [31:0] pcpi_rs2,
+	input             pcpi_wr,
+	input      [31:0] pcpi_rd,
+	input             pcpi_wait,
+	input             pcpi_ready,
 
 	// IRQ Interface
 	input      [31:0] irq,
@@ -119,9 +122,13 @@ module picorv32 #(
 
 `ifdef RISCV_FORMAL
 	output reg        rvfi_valid,
-	output reg [ 7:0] rvfi_order,
+	output reg [63:0] rvfi_order,
 	output reg [31:0] rvfi_insn,
 	output reg        rvfi_trap,
+	output reg        rvfi_halt,
+	output reg        rvfi_intr,
+	output reg [ 1:0] rvfi_mode,
+	output reg [ 1:0] rvfi_ixl,
 	output reg [ 4:0] rvfi_rs1_addr,
 	output reg [ 4:0] rvfi_rs2_addr,
 	output reg [31:0] rvfi_rs1_rdata,
@@ -135,6 +142,16 @@ module picorv32 #(
 	output reg [ 3:0] rvfi_mem_wmask,
 	output reg [31:0] rvfi_mem_rdata,
 	output reg [31:0] rvfi_mem_wdata,
+
+	output reg [63:0] rvfi_csr_mcycle_rmask,
+	output reg [63:0] rvfi_csr_mcycle_wmask,
+	output reg [63:0] rvfi_csr_mcycle_rdata,
+	output reg [63:0] rvfi_csr_mcycle_wdata,
+
+	output reg [63:0] rvfi_csr_minstret_rmask,
+	output reg [63:0] rvfi_csr_minstret_wmask,
+	output reg [63:0] rvfi_csr_minstret_rdata,
+	output reg [63:0] rvfi_csr_minstret_wdata,
 `endif
 
 	// Trace Interface
@@ -155,17 +172,8 @@ module picorv32 #(
 	localparam [35:0] TRACE_ADDR   = {4'b 0010, 32'b 0};
 	localparam [35:0] TRACE_IRQ    = {4'b 1000, 32'b 0};
 
-	wire            mem_la_read;
-	wire            mem_la_write;
-	wire     [31:0] mem_la_addr;
-	reg [31:0] mem_la_wdata;
-	reg [ 3:0] mem_la_wstrb;
-
 	reg [63:0] count_cycle, count_instr;
 	reg [31:0] reg_pc, reg_next_pc, reg_op1, reg_op2, reg_out;
-
-	(* ram_style = "distributed" *)
-	reg [31:0] cpuregs [0:regfile_size-1];
 	reg [4:0] reg_sh;
 
 	reg [31:0] next_insn_opcode;
@@ -180,15 +188,6 @@ module picorv32 #(
 	wire [ 3:0] dbg_mem_wstrb = mem_wstrb;
 	wire [31:0] dbg_mem_rdata = mem_rdata;
 
-	reg        		pcpi_valid;
-	reg 		[31:0] 	pcpi_insn;
-	wire     [31:0] pcpi_rs1;
-	wire     [31:0] pcpi_rs2;
-	wire             pcpi_wr;
-	wire      [31:0] pcpi_rd;
-	wire             pcpi_wait;
-	wire             pcpi_ready;
-
 	assign pcpi_rs1 = reg_op1;
 	assign pcpi_rs2 = reg_op2;
 
@@ -200,6 +199,10 @@ module picorv32 #(
 	reg [31:0] irq_pending;
 	reg [31:0] timer;
 
+`ifndef PICORV32_REGS
+	(* ram_style = "distributed" *)
+	reg [31:0] cpuregs [0:regfile_size-1];
+
 	integer i;
 	initial begin
 		if (REGS_INIT_ZERO) begin
@@ -207,6 +210,7 @@ module picorv32 #(
 				cpuregs[i] = 0;
 		end
 	end
+`endif
 
 	task empty_statement;
 		// This task is used by the `assert directive in non-formal mode to
@@ -215,40 +219,44 @@ module picorv32 #(
 	endtask
 
 `ifdef DEBUGREGS
-	wire [31:0] dbg_reg_x0  = cpuregs[0];
-	wire [31:0] dbg_reg_x1  = cpuregs[1];
-	wire [31:0] dbg_reg_x2  = cpuregs[2];
-	wire [31:0] dbg_reg_x3  = cpuregs[3];
-	wire [31:0] dbg_reg_x4  = cpuregs[4];
-	wire [31:0] dbg_reg_x5  = cpuregs[5];
-	wire [31:0] dbg_reg_x6  = cpuregs[6];
-	wire [31:0] dbg_reg_x7  = cpuregs[7];
-	wire [31:0] dbg_reg_x8  = cpuregs[8];
-	wire [31:0] dbg_reg_x9  = cpuregs[9];
-	wire [31:0] dbg_reg_x10 = cpuregs[10];
-	wire [31:0] dbg_reg_x11 = cpuregs[11];
-	wire [31:0] dbg_reg_x12 = cpuregs[12];
-	wire [31:0] dbg_reg_x13 = cpuregs[13];
-	wire [31:0] dbg_reg_x14 = cpuregs[14];
-	wire [31:0] dbg_reg_x15 = cpuregs[15];
-	wire [31:0] dbg_reg_x16 = cpuregs[16];
-	wire [31:0] dbg_reg_x17 = cpuregs[17];
-	wire [31:0] dbg_reg_x18 = cpuregs[18];
-	wire [31:0] dbg_reg_x19 = cpuregs[19];
-	wire [31:0] dbg_reg_x20 = cpuregs[20];
-	wire [31:0] dbg_reg_x21 = cpuregs[21];
-	wire [31:0] dbg_reg_x22 = cpuregs[22];
-	wire [31:0] dbg_reg_x23 = cpuregs[23];
-	wire [31:0] dbg_reg_x24 = cpuregs[24];
-	wire [31:0] dbg_reg_x25 = cpuregs[25];
-	wire [31:0] dbg_reg_x26 = cpuregs[26];
-	wire [31:0] dbg_reg_x27 = cpuregs[27];
-	wire [31:0] dbg_reg_x28 = cpuregs[28];
-	wire [31:0] dbg_reg_x29 = cpuregs[29];
-	wire [31:0] dbg_reg_x30 = cpuregs[30];
-	wire [31:0] dbg_reg_x31 = cpuregs[31];
-`endif
+	wire [31:0] dbg_reg_x0  = 0;
+	wire [31:0] dbg_reg_ra  = cpuregs[1];
+	wire [31:0] dbg_reg_sp  = cpuregs[2];
+	wire [31:0] dbg_reg_gp  = cpuregs[3];
+	wire [31:0] dbg_reg_tp  = cpuregs[4];
+	wire [31:0] dbg_reg_t0  = cpuregs[5];
+	wire [31:0] dbg_reg_t1  = cpuregs[6];
+	wire [31:0] dbg_reg_t2  = cpuregs[7];
+	wire [31:0] dbg_reg_s0  = cpuregs[8];
+	wire [31:0] dbg_reg_s1  = cpuregs[9];
+	wire [31:0] dbg_reg_a0  = cpuregs[10];
+	wire [31:0] dbg_reg_a1  = cpuregs[11];
+	wire [31:0] dbg_reg_a2  = cpuregs[12];
+	wire [31:0] dbg_reg_a3  = cpuregs[13];
+	wire [31:0] dbg_reg_a4  = cpuregs[14];
+	wire [31:0] dbg_reg_a5  = cpuregs[15];
+	wire [31:0] dbg_reg_a6  = cpuregs[16];
+	wire [31:0] dbg_reg_a7  = cpuregs[17];
+	wire [31:0] dbg_reg_s2  = cpuregs[18];
+	wire [31:0] dbg_reg_s3  = cpuregs[19];
+	wire [31:0] dbg_reg_s4  = cpuregs[20];
+	wire [31:0] dbg_reg_s5  = cpuregs[21];
+	wire [31:0] dbg_reg_s6  = cpuregs[22];
+	wire [31:0] dbg_reg_s7  = cpuregs[23];
+	wire [31:0] dbg_reg_s8  = cpuregs[24];
+	wire [31:0] dbg_reg_s9  = cpuregs[25];
+	wire [31:0] dbg_reg_s10 = cpuregs[26];
+	wire [31:0] dbg_reg_s11 = cpuregs[27];
+	wire [31:0] dbg_reg_t3  = cpuregs[28];
+	wire [31:0] dbg_reg_t4  = cpuregs[29];
+	wire [31:0] dbg_reg_t5  = cpuregs[30];
+	wire [31:0] dbg_reg_t6  = cpuregs[31];
+	wire [31:0] dbg_reg_x32 = cpuregs[32];
+	wire [31:0] dbg_reg_x33 = cpuregs[33];
+	wire [31:0] dbg_reg_x34 = cpuregs[34];
+	wire [31:0] dbg_reg_x35 = cpuregs[35];
 
+`endif
 
 	// Internal PCPI Cores
 
@@ -329,8 +337,8 @@ module picorv32 #(
 		(* parallel_case *)
 		case (1'b1)
 			ENABLE_PCPI && pcpi_ready: begin
-				pcpi_int_wr = pcpi_wr;
-				pcpi_int_rd = pcpi_rd;
+				pcpi_int_wr = ENABLE_PCPI ? pcpi_wr : 0;
+				pcpi_int_rd = ENABLE_PCPI ? pcpi_rd : 0;
 			end
 			(ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready: begin
 				pcpi_int_wr = pcpi_mul_wr;
@@ -650,8 +658,8 @@ module picorv32 #(
 	reg instr_getq, instr_setq, instr_retirq, instr_maskirq, instr_waitirq, instr_timer;
 	wire instr_trap;
 
-	reg [regindex_bits-1:0] decoded_rd, decoded_rs1, decoded_rs2;
-	reg [31:0] decoded_imm, decoded_imm_uj;
+	(*MAX_FANOUT = 15 *) reg [regindex_bits-1:0] decoded_rd, decoded_rs1, decoded_rs2;
+	reg [31:0] decoded_imm, decoded_imm_j;
 	reg decoder_trigger;
 	reg decoder_trigger_q;
 	reg decoder_pseudo_trigger;
@@ -680,7 +688,7 @@ module picorv32 #(
 			instr_add, instr_sub, instr_sll, instr_slt, instr_sltu, instr_xor, instr_srl, instr_sra, instr_or, instr_and,
 			instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh,
 			instr_getq, instr_setq, instr_retirq, instr_maskirq, instr_waitirq, instr_timer};
-	
+
 	wire is_rdcycle_rdcycleh_rdinstr_rdinstrh;
 	assign is_rdcycle_rdcycleh_rdinstr_rdinstrh = |{instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh};
 
@@ -863,7 +871,7 @@ module picorv32 #(
 			instr_lui     <= mem_rdata_latched[6:0] == 7'b0110111;
 			instr_auipc   <= mem_rdata_latched[6:0] == 7'b0010111;
 			instr_jal     <= mem_rdata_latched[6:0] == 7'b1101111;
-			instr_jalr    <= mem_rdata_latched[6:0] == 7'b1100111;
+			instr_jalr    <= mem_rdata_latched[6:0] == 7'b1100111 && mem_rdata_latched[14:12] == 3'b000;
 			instr_retirq  <= mem_rdata_latched[6:0] == 7'b0001011 && mem_rdata_latched[31:25] == 7'b0000010 && ENABLE_IRQ;
 			instr_waitirq <= mem_rdata_latched[6:0] == 7'b0001011 && mem_rdata_latched[31:25] == 7'b0000100 && ENABLE_IRQ;
 
@@ -873,7 +881,7 @@ module picorv32 #(
 			is_alu_reg_imm               <= mem_rdata_latched[6:0] == 7'b0010011;
 			is_alu_reg_reg               <= mem_rdata_latched[6:0] == 7'b0110011;
 
-			{ decoded_imm_uj[31:20], decoded_imm_uj[10:1], decoded_imm_uj[11], decoded_imm_uj[19:12], decoded_imm_uj[0] } <= $signed({mem_rdata_latched[31:12], 1'b0});
+			{ decoded_imm_j[31:20], decoded_imm_j[10:1], decoded_imm_j[11], decoded_imm_j[19:12], decoded_imm_j[0] } <= $signed({mem_rdata_latched[31:12], 1'b0});
 
 			decoded_rd <= mem_rdata_latched[11:7];
 			decoded_rs1 <= mem_rdata_latched[19:15];
@@ -892,8 +900,8 @@ module picorv32 #(
 				decoded_rs1 <= 0;
 				decoded_rs2 <= 0;
 
-				{ decoded_imm_uj[31:11], decoded_imm_uj[4], decoded_imm_uj[9:8], decoded_imm_uj[10], decoded_imm_uj[6],
-				  decoded_imm_uj[7], decoded_imm_uj[3:1], decoded_imm_uj[5], decoded_imm_uj[0] } <= $signed({mem_rdata_latched[12:2], 1'b0});
+				{ decoded_imm_j[31:11], decoded_imm_j[4], decoded_imm_j[9:8], decoded_imm_j[10], decoded_imm_j[6],
+				  decoded_imm_j[7], decoded_imm_j[3:1], decoded_imm_j[5], decoded_imm_j[0] } <= $signed({mem_rdata_latched[12:2], 1'b0});
 
 				case (mem_rdata_latched[1:0])
 					2'b00: begin // Quadrant 0
@@ -932,18 +940,20 @@ module picorv32 #(
 								decoded_rs1 <= 0;
 							end
 							3'b 011: begin
-								if (mem_rdata_latched[11:7] == 2) begin // C.ADDI16SP
-									is_alu_reg_imm <= 1;
-									decoded_rd <= mem_rdata_latched[11:7];
-									decoded_rs1 <= mem_rdata_latched[11:7];
-								end else begin // C.LUI
-									instr_lui <= 1;
-									decoded_rd <= mem_rdata_latched[11:7];
-									decoded_rs1 <= 0;
+								if (mem_rdata_latched[12] || mem_rdata_latched[6:2]) begin
+									if (mem_rdata_latched[11:7] == 2) begin // C.ADDI16SP
+										is_alu_reg_imm <= 1;
+										decoded_rd <= mem_rdata_latched[11:7];
+										decoded_rs1 <= mem_rdata_latched[11:7];
+									end else begin // C.LUI
+										instr_lui <= 1;
+										decoded_rd <= mem_rdata_latched[11:7];
+										decoded_rs1 <= 0;
+									end
 								end
 							end
 							3'b100: begin
-								if (mem_rdata_latched[11] == 1'b0) begin // C.SRLI, C.SRAI
+								if (!mem_rdata_latched[11] && !mem_rdata_latched[12]) begin // C.SRLI, C.SRAI
 									is_alu_reg_imm <= 1;
 									decoded_rd <= 8 + mem_rdata_latched[9:7];
 									decoded_rs1 <= 8 + mem_rdata_latched[9:7];
@@ -979,18 +989,22 @@ module picorv32 #(
 					2'b10: begin // Quadrant 2
 						case (mem_rdata_latched[15:13])
 							3'b000: begin // C.SLLI
-								is_alu_reg_imm <= 1;
-								decoded_rd <= mem_rdata_latched[11:7];
-								decoded_rs1 <= mem_rdata_latched[11:7];
-								decoded_rs2 <= {mem_rdata_latched[12], mem_rdata_latched[6:2]};
+								if (!mem_rdata_latched[12]) begin
+									is_alu_reg_imm <= 1;
+									decoded_rd <= mem_rdata_latched[11:7];
+									decoded_rs1 <= mem_rdata_latched[11:7];
+									decoded_rs2 <= {mem_rdata_latched[12], mem_rdata_latched[6:2]};
+								end
 							end
 							3'b010: begin // C.LWSP
-								is_lb_lh_lw_lbu_lhu <= 1;
-								decoded_rd <= mem_rdata_latched[11:7];
-								decoded_rs1 <= 2;
+								if (mem_rdata_latched[11:7]) begin
+									is_lb_lh_lw_lbu_lhu <= 1;
+									decoded_rd <= mem_rdata_latched[11:7];
+									decoded_rs1 <= 2;
+								end
 							end
 							3'b100: begin
-								if (mem_rdata_latched[12] == 0 && mem_rdata_latched[6:2] == 0) begin // C.JR
+								if (mem_rdata_latched[12] == 0 && mem_rdata_latched[11:7] != 0 && mem_rdata_latched[6:2] == 0) begin // C.JR
 									instr_jalr <= 1;
 									decoded_rd <= 0;
 									decoded_rs1 <= mem_rdata_latched[11:7];
@@ -1108,7 +1122,7 @@ module picorv32 #(
 			(* parallel_case *)
 			case (1'b1)
 				instr_jal:
-					decoded_imm <= decoded_imm_uj;
+					decoded_imm <= decoded_imm_j;
 				|{instr_lui, instr_auipc}:
 					decoded_imm <= mem_rdata_q[31:12] << 12;
 				|{instr_jalr, is_lb_lh_lw_lbu_lhu, is_alu_reg_imm}:
@@ -1197,7 +1211,7 @@ module picorv32 #(
 	reg [regindex_bits-1:0] latched_rd;
 
 	reg [31:0] current_pc;
-	assign next_pc = latched_store && latched_branch ? reg_out : reg_next_pc;
+	assign next_pc = latched_store && latched_branch ? reg_out & ~1 : reg_next_pc;
 
 	reg [3:0] pcpi_timeout_counter;
 	reg pcpi_timeout;
@@ -1269,6 +1283,11 @@ module picorv32 #(
 			BARREL_SHIFTER && (instr_srl || instr_srli || instr_sra || instr_srai):
 				alu_out = alu_shr;
 		endcase
+
+`ifdef RISCV_FORMAL_BLACKBOX_ALU
+		alu_out_0 = $anyseq;
+		alu_out = $anyseq;
+`endif
 	end
 
 	reg clear_prefetched_high_word_q;
@@ -1284,15 +1303,9 @@ module picorv32 #(
 
 	reg cpuregs_write;
 	reg [31:0] cpuregs_wrdata;
-// `ifndef XILINX_ISE_14_7
 	reg [31:0] cpuregs_rs1;
 	reg [31:0] cpuregs_rs2;
 	reg [regindex_bits-1:0] decoded_rs;
-// `else
-// 	wire [31:0] cpuregs_rs1;
-// 	wire [31:0] cpuregs_rs2;
-// 	wire [regindex_bits-1:0] decoded_rs;
-// `endif
 
 	always @* begin
 		cpuregs_write = 0;
@@ -1321,12 +1334,18 @@ module picorv32 #(
 		end
 	end
 
+`ifndef PICORV32_REGS
 	always @(posedge clk) begin
-		if (resetn && cpuregs_write)
+		if (resetn && cpuregs_write && latched_rd)
+`ifdef PICORV32_TESTBUG_001
+			cpuregs[latched_rd ^ 1] <= cpuregs_wrdata;
+`elsif PICORV32_TESTBUG_002
+			cpuregs[latched_rd] <= cpuregs_wrdata ^ 1;
+`else
 			cpuregs[latched_rd] <= cpuregs_wrdata;
+`endif
 	end
 
-// `ifndef XILINX_ISE_14_7
 	always @(decoded_rs1,decoded_rs2,cpuregs_rs1,cpuregs_rs2,
 			cpuregs[0],cpuregs[1],cpuregs[2],cpuregs[3],cpuregs[4],
 			cpuregs[5],cpuregs[6],cpuregs[7],cpuregs[8],cpuregs[9],
@@ -1334,22 +1353,57 @@ module picorv32 #(
 			cpuregs[15],cpuregs[16],cpuregs[17],cpuregs[18],cpuregs[19],
 			cpuregs[20],cpuregs[21],cpuregs[22],cpuregs[23],cpuregs[24],
 			cpuregs[25],cpuregs[26],cpuregs[27],cpuregs[28],cpuregs[29],
-			cpuregs[30],cpuregs[31]) begin
-		// decoded_rs = 'bx;
-		// if (ENABLE_REGS_DUALPORT) begin
+			cpuregs[30],cpuregs[31],cpuregs[32],cpuregs[33],cpuregs[34],cpuregs[35]) begin
+		decoded_rs = 'bx;
+		if (ENABLE_REGS_DUALPORT) begin
+`ifndef RISCV_FORMAL_BLACKBOX_REGS
 			cpuregs_rs1 = decoded_rs1 ? cpuregs[decoded_rs1] : 0;
 			cpuregs_rs2 = decoded_rs2 ? cpuregs[decoded_rs2] : 0;
-		// end else begin
-		// 	decoded_rs = (cpu_state == cpu_state_ld_rs2) ? decoded_rs2 : decoded_rs1;
-		// 	cpuregs_rs1 = decoded_rs ? cpuregs[decoded_rs] : 0;
-		// 	cpuregs_rs2 = cpuregs_rs1;
-		// end
+`else
+			cpuregs_rs1 = decoded_rs1 ? $anyseq : 0;
+			cpuregs_rs2 = decoded_rs2 ? $anyseq : 0;
+`endif
+		end else begin
+			decoded_rs = (cpu_state == cpu_state_ld_rs2) ? decoded_rs2 : decoded_rs1;
+`ifndef RISCV_FORMAL_BLACKBOX_REGS
+			cpuregs_rs1 = decoded_rs ? cpuregs[decoded_rs] : 0;
+`else
+			cpuregs_rs1 = decoded_rs ? $anyseq : 0;
+`endif
+			cpuregs_rs2 = cpuregs_rs1;
+		end
 	end
-// `else
-//         assign decoded_rs = (cpu_state == cpu_state_ld_rs2) ? decoded_rs2 : decoded_rs1;
-//         assign cpuregs_rs1 = decoded_rs ? cpuregs[decoded_rs] : 0;
-//         assign cpuregs_rs2 = cpuregs_rs1;
-// `endif
+`else
+	wire[31:0] cpuregs_rdata1;
+	wire[31:0] cpuregs_rdata2;
+
+	wire [5:0] cpuregs_waddr = latched_rd;
+	wire [5:0] cpuregs_raddr1 = ENABLE_REGS_DUALPORT ? decoded_rs1 : decoded_rs;
+	wire [5:0] cpuregs_raddr2 = ENABLE_REGS_DUALPORT ? decoded_rs2 : 0;
+
+	`PICORV32_REGS cpuregs (
+		.clk(clk),
+		.wen(resetn && cpuregs_write && latched_rd),
+		.waddr(cpuregs_waddr),
+		.raddr1(cpuregs_raddr1),
+		.raddr2(cpuregs_raddr2),
+		.wdata(cpuregs_wrdata),
+		.rdata1(cpuregs_rdata1),
+		.rdata2(cpuregs_rdata2)
+	);
+
+	always @* begin
+		decoded_rs = 'bx;
+		if (ENABLE_REGS_DUALPORT) begin
+			cpuregs_rs1 = decoded_rs1 ? cpuregs_rdata1 : 0;
+			cpuregs_rs2 = decoded_rs2 ? cpuregs_rdata2 : 0;
+		end else begin
+			decoded_rs = (cpu_state == cpu_state_ld_rs2) ? decoded_rs2 : decoded_rs1;
+			cpuregs_rs1 = decoded_rs ? cpuregs_rdata1 : 0;
+			cpuregs_rs2 = cpuregs_rs1;
+		end
+	end
+`endif
 
 	assign launch_next_insn = cpu_state == cpu_state_fetch && decoder_trigger && (!ENABLE_IRQ || irq_delay || irq_active || !(irq_pending & ~irq_mask));
 
@@ -1394,13 +1448,7 @@ module picorv32 #(
 		next_irq_pending = ENABLE_IRQ ? irq_pending & LATCHED_IRQ : 'bx;
 
 		if (ENABLE_IRQ && ENABLE_IRQ_TIMER && timer) begin
-			if (timer - 1 == 0)
-				next_irq_pending[irq_timer] = 1;
 			timer <= timer - 1;
-		end
-
-		if (ENABLE_IRQ) begin
-			next_irq_pending = next_irq_pending | irq;
 		end
 
 		decoder_trigger <= mem_do_rinst && mem_done;
@@ -1457,7 +1505,7 @@ module picorv32 #(
 				(* parallel_case *)
 				case (1'b1)
 					latched_branch: begin
-						current_pc = latched_store ? (latched_stalu ? alu_out_q : reg_out) : reg_next_pc;
+						current_pc = latched_store ? (latched_stalu ? alu_out_q : reg_out) & ~1 : reg_next_pc;
 						`debug($display("ST_RD:  %2d 0x%08x, BRANCH 0x%08x", latched_rd, reg_pc + (latched_compr ? 2 : 4), current_pc);)
 					end
 					latched_store && !latched_branch: begin
@@ -1526,7 +1574,7 @@ module picorv32 #(
 					end
 					if (instr_jal) begin
 						mem_do_rinst <= 1;
-						reg_next_pc <= current_pc + decoded_imm_uj;
+						reg_next_pc <= current_pc + decoded_imm_j;
 						latched_branch <= 1;
 					end else begin
 						mem_do_rinst <= 0;
@@ -1872,6 +1920,13 @@ module picorv32 #(
 			end
 		endcase
 
+		if (ENABLE_IRQ) begin
+			next_irq_pending = next_irq_pending | irq;
+			if(ENABLE_IRQ_TIMER && timer)
+				if (timer - 1 == 0)
+					next_irq_pending[irq_timer] = 1;
+		end
+
 		if (CATCH_MISALIGN && resetn && (mem_do_rdata || mem_do_wdata)) begin
 			if (mem_wordsize == 0 && reg_op1[1:0] != 0) begin
 				`debug($display("MISALIGNED WORD: 0x%08x", reg_op1);)
@@ -1928,9 +1983,12 @@ module picorv32 #(
 	end
 
 `ifdef RISCV_FORMAL
+	reg dbg_irq_call;
+	reg dbg_irq_enter;
+	reg [31:0] dbg_irq_ret;
 	always @(posedge clk) begin
 		rvfi_valid <= resetn && (launch_next_insn || trap) && dbg_valid_insn;
-		rvfi_order <= 0;
+		rvfi_order <= resetn ? rvfi_order + rvfi_valid : 0;
 
 		rvfi_insn <= dbg_insn_opcode;
 		rvfi_rs1_addr <= dbg_rs1val_valid ? dbg_insn_rs1 : 0;
@@ -1939,38 +1997,113 @@ module picorv32 #(
 		rvfi_rs1_rdata <= dbg_rs1val_valid ? dbg_rs1val : 0;
 		rvfi_rs2_rdata <= dbg_rs2val_valid ? dbg_rs2val : 0;
 		rvfi_trap <= trap;
+		rvfi_halt <= trap;
+		rvfi_intr <= dbg_irq_enter;
+		rvfi_mode <= 3;
+		rvfi_ixl <= 1;
+
+		if (!resetn) begin
+			dbg_irq_call <= 0;
+			dbg_irq_enter <= 0;
+		end else
+		if (rvfi_valid) begin
+			dbg_irq_call <= 0;
+			dbg_irq_enter <= dbg_irq_call;
+		end else
+		if (irq_state == 1) begin
+			dbg_irq_call <= 1;
+			dbg_irq_ret <= next_pc;
+		end
 
 		if (!resetn) begin
 			rvfi_rd_addr <= 0;
 			rvfi_rd_wdata <= 0;
 		end else
-		if (cpuregs_write) begin
+		if (cpuregs_write && !irq_state) begin
+`ifdef PICORV32_TESTBUG_003
+			rvfi_rd_addr <= latched_rd ^ 1;
+`else
 			rvfi_rd_addr <= latched_rd;
+`endif
+`ifdef PICORV32_TESTBUG_004
+			rvfi_rd_wdata <= latched_rd ? cpuregs_wrdata ^ 1 : 0;
+`else
 			rvfi_rd_wdata <= latched_rd ? cpuregs_wrdata : 0;
+`endif
 		end else
 		if (rvfi_valid) begin
 			rvfi_rd_addr <= 0;
 			rvfi_rd_wdata <= 0;
 		end
 
-		if (dbg_mem_instr) begin
-			rvfi_mem_addr <= 0;
-			rvfi_mem_rmask <= 0;
-			rvfi_mem_wmask <= 0;
-			rvfi_mem_rdata <= 0;
-			rvfi_mem_wdata <= 0;
-		end else
-		if (dbg_mem_valid && dbg_mem_ready) begin
-			rvfi_mem_addr <= dbg_mem_addr;
-			rvfi_mem_rmask <= dbg_mem_wstrb ? 0 : ~0;
-			rvfi_mem_wmask <= dbg_mem_wstrb;
-			rvfi_mem_rdata <= dbg_mem_rdata;
-			rvfi_mem_wdata <= dbg_mem_wdata;
+		casez (dbg_insn_opcode)
+			32'b 0000000_?????_000??_???_?????_0001011: begin // getq
+				rvfi_rs1_addr <= 0;
+				rvfi_rs1_rdata <= 0;
+			end
+			32'b 0000001_?????_?????_???_000??_0001011: begin // setq
+				rvfi_rd_addr <= 0;
+				rvfi_rd_wdata <= 0;
+			end
+			32'b 0000010_?????_00000_???_00000_0001011: begin // retirq
+				rvfi_rs1_addr <= 0;
+				rvfi_rs1_rdata <= 0;
+			end
+		endcase
+
+		if (!dbg_irq_call) begin
+			if (dbg_mem_instr) begin
+				rvfi_mem_addr <= 0;
+				rvfi_mem_rmask <= 0;
+				rvfi_mem_wmask <= 0;
+				rvfi_mem_rdata <= 0;
+				rvfi_mem_wdata <= 0;
+			end else
+			if (dbg_mem_valid && dbg_mem_ready) begin
+				rvfi_mem_addr <= dbg_mem_addr;
+				rvfi_mem_rmask <= dbg_mem_wstrb ? 0 : ~0;
+				rvfi_mem_wmask <= dbg_mem_wstrb;
+				rvfi_mem_rdata <= dbg_mem_rdata;
+				rvfi_mem_wdata <= dbg_mem_wdata;
+			end
 		end
 	end
 
 	always @* begin
-		rvfi_pc_wdata = dbg_insn_addr;
+`ifdef PICORV32_TESTBUG_005
+		rvfi_pc_wdata = (dbg_irq_call ? dbg_irq_ret : dbg_insn_addr) ^ 4;
+`else
+		rvfi_pc_wdata = dbg_irq_call ? dbg_irq_ret : dbg_insn_addr;
+`endif
+
+		rvfi_csr_mcycle_rmask = 0;
+		rvfi_csr_mcycle_wmask = 0;
+		rvfi_csr_mcycle_rdata = 0;
+		rvfi_csr_mcycle_wdata = 0;
+
+		rvfi_csr_minstret_rmask = 0;
+		rvfi_csr_minstret_wmask = 0;
+		rvfi_csr_minstret_rdata = 0;
+		rvfi_csr_minstret_wdata = 0;
+
+		if (rvfi_valid && rvfi_insn[6:0] == 7'b 1110011 && rvfi_insn[13:12] == 3'b010) begin
+			if (rvfi_insn[31:20] == 12'h C00) begin
+				rvfi_csr_mcycle_rmask = 64'h 0000_0000_FFFF_FFFF;
+				rvfi_csr_mcycle_rdata = {32'h 0000_0000, rvfi_rd_wdata};
+			end
+			if (rvfi_insn[31:20] == 12'h C80) begin
+				rvfi_csr_mcycle_rmask = 64'h FFFF_FFFF_0000_0000;
+				rvfi_csr_mcycle_rdata = {rvfi_rd_wdata, 32'h 0000_0000};
+			end
+			if (rvfi_insn[31:20] == 12'h C02) begin
+				rvfi_csr_minstret_rmask = 64'h 0000_0000_FFFF_FFFF;
+				rvfi_csr_minstret_rdata = {32'h 0000_0000, rvfi_rd_wdata};
+			end
+			if (rvfi_insn[31:20] == 12'h C82) begin
+				rvfi_csr_minstret_rmask = 64'h FFFF_FFFF_0000_0000;
+				rvfi_csr_minstret_rdata = {rvfi_rd_wdata, 32'h 0000_0000};
+			end
+		end
 	end
 `endif
 
@@ -2040,6 +2173,30 @@ module picorv32 #(
 	end
 `endif
 endmodule
+
+// This is a simple example implementation of PICORV32_REGS.
+// Use the PICORV32_REGS mechanism if you want to use custom
+// memory resources to implement the processor register file.
+// Note that your implementation must match the requirements of
+// the PicoRV32 configuration. (e.g. QREGS, etc)
+module picorv32_regs (
+	input clk, wen,
+	input [5:0] waddr,
+	input [5:0] raddr1,
+	input [5:0] raddr2,
+	input [31:0] wdata,
+	output [31:0] rdata1,
+	output [31:0] rdata2
+);
+	reg [31:0] regs [0:30];
+
+	always @(posedge clk)
+		if (wen) regs[~waddr[4:0]] <= wdata;
+
+	assign rdata1 = regs[~raddr1[4:0]];
+	assign rdata2 = regs[~raddr2[4:0]];
+endmodule
+
 
 /***************************************************************
  * picorv32_pcpi_mul
@@ -2116,7 +2273,7 @@ module picorv32_pcpi_mul #(
 			mul_waiting <= !mul_start;
 		end else begin
 			mul_counter <= mul_counter - 1;
-			if (mul_counter == 5'd0) begin
+			if (mul_counter == 5'd2) begin
 				mul_finish <= 1;
 				mul_waiting <= 1;
 			end
@@ -2227,7 +2384,15 @@ module picorv32_pcpi_fast_mul #(
 	assign pcpi_wr = active[EXTRA_MUL_FFS ? 3 : 1];
 	assign pcpi_wait = 0;
 	assign pcpi_ready = active[EXTRA_MUL_FFS ? 3 : 1];
+`ifdef RISCV_FORMAL_ALTOPS
+	assign pcpi_rd =
+			instr_mul    ? (pcpi_rs1 + pcpi_rs2) ^ 32'h5876063e :
+			instr_mulh   ? (pcpi_rs1 + pcpi_rs2) ^ 32'hf6583fb7 :
+			instr_mulhsu ? (pcpi_rs1 - pcpi_rs2) ^ 32'hecfbe137 :
+			instr_mulhu  ? (pcpi_rs1 + pcpi_rs2) ^ 32'h949ce5e8 : 1'bx;
+`else
 	assign pcpi_rd = shift_out ? (EXTRA_MUL_FFS ? rd_q : rd) >> 32 : (EXTRA_MUL_FFS ? rd_q : rd);
+`endif
 endmodule
 
 
@@ -2268,8 +2433,8 @@ module picorv32_pcpi_div (
 			endcase
 		end
 
-		pcpi_wait <= instr_any_div_rem;
-		pcpi_wait_q <= pcpi_wait;
+		pcpi_wait <= instr_any_div_rem && resetn;
+		pcpi_wait_q <= pcpi_wait && resetn;
 	end
 
 	reg [31:0] dividend;
@@ -2299,17 +2464,30 @@ module picorv32_pcpi_div (
 			running <= 0;
 			pcpi_ready <= 1;
 			pcpi_wr <= 1;
+`ifdef RISCV_FORMAL_ALTOPS
+			case (1)
+				instr_div:  pcpi_rd <= (pcpi_rs1 - pcpi_rs2) ^ 32'h7f8529ec;
+				instr_divu: pcpi_rd <= (pcpi_rs1 - pcpi_rs2) ^ 32'h10e8fd70;
+				instr_rem:  pcpi_rd <= (pcpi_rs1 - pcpi_rs2) ^ 32'h8da68fa5;
+				instr_remu: pcpi_rd <= (pcpi_rs1 - pcpi_rs2) ^ 32'h3138d0e1;
+			endcase
+`else
 			if (instr_div || instr_divu)
 				pcpi_rd <= outsign ? -quotient : quotient;
 			else
 				pcpi_rd <= outsign ? -dividend : dividend;
+`endif
 		end else begin
 			if (divisor <= dividend) begin
 				dividend <= dividend - divisor;
 				quotient <= quotient | quotient_msk;
 			end
 			divisor <= divisor >> 1;
+`ifdef RISCV_FORMAL_ALTOPS
+			quotient_msk <= quotient_msk >> 5;
+`else
 			quotient_msk <= quotient_msk >> 1;
+`endif
 		end
 	end
 endmodule
@@ -2386,6 +2564,28 @@ module picorv32_axi #(
 	// IRQ interface
 	input  [31:0] irq,
 	output [31:0] eoi,
+
+`ifdef RISCV_FORMAL
+	output        rvfi_valid,
+	output [63:0] rvfi_order,
+	output [31:0] rvfi_insn,
+	output        rvfi_trap,
+	output        rvfi_halt,
+	output        rvfi_intr,
+	output [ 4:0] rvfi_rs1_addr,
+	output [ 4:0] rvfi_rs2_addr,
+	output [31:0] rvfi_rs1_rdata,
+	output [31:0] rvfi_rs2_rdata,
+	output [ 4:0] rvfi_rd_addr,
+	output [31:0] rvfi_rd_wdata,
+	output [31:0] rvfi_pc_rdata,
+	output [31:0] rvfi_pc_wdata,
+	output [31:0] rvfi_mem_addr,
+	output [ 3:0] rvfi_mem_rmask,
+	output [ 3:0] rvfi_mem_wmask,
+	output [31:0] rvfi_mem_rdata,
+	output [31:0] rvfi_mem_wdata,
+`endif
 
 	// Trace Interface
 	output        trace_valid,
@@ -2479,6 +2679,28 @@ module picorv32_axi #(
 		.irq(irq),
 		.eoi(eoi),
 
+`ifdef RISCV_FORMAL
+		.rvfi_valid    (rvfi_valid    ),
+		.rvfi_order    (rvfi_order    ),
+		.rvfi_insn     (rvfi_insn     ),
+		.rvfi_trap     (rvfi_trap     ),
+		.rvfi_halt     (rvfi_halt     ),
+		.rvfi_intr     (rvfi_intr     ),
+		.rvfi_rs1_addr (rvfi_rs1_addr ),
+		.rvfi_rs2_addr (rvfi_rs2_addr ),
+		.rvfi_rs1_rdata(rvfi_rs1_rdata),
+		.rvfi_rs2_rdata(rvfi_rs2_rdata),
+		.rvfi_rd_addr  (rvfi_rd_addr  ),
+		.rvfi_rd_wdata (rvfi_rd_wdata ),
+		.rvfi_pc_rdata (rvfi_pc_rdata ),
+		.rvfi_pc_wdata (rvfi_pc_wdata ),
+		.rvfi_mem_addr (rvfi_mem_addr ),
+		.rvfi_mem_rmask(rvfi_mem_rmask),
+		.rvfi_mem_wmask(rvfi_mem_wmask),
+		.rvfi_mem_rdata(rvfi_mem_rdata),
+		.rvfi_mem_wdata(rvfi_mem_wdata),
+`endif
+
 		.trace_valid(trace_valid),
 		.trace_data (trace_data)
 	);
@@ -2568,6 +2790,247 @@ module picorv32_axi_adapter (
 	end
 endmodule
 
+
+/***************************************************************
+ * picorv32_wb
+ ***************************************************************/
+
+module picorv32_wb #(
+	parameter [ 0:0] ENABLE_COUNTERS = 1,
+	parameter [ 0:0] ENABLE_COUNTERS64 = 1,
+	parameter [ 0:0] ENABLE_REGS_16_31 = 1,
+	parameter [ 0:0] ENABLE_REGS_DUALPORT = 1,
+	parameter [ 0:0] TWO_STAGE_SHIFT = 1,
+	parameter [ 0:0] BARREL_SHIFTER = 0,
+	parameter [ 0:0] TWO_CYCLE_COMPARE = 0,
+	parameter [ 0:0] TWO_CYCLE_ALU = 0,
+	parameter [ 0:0] COMPRESSED_ISA = 0,
+	parameter [ 0:0] CATCH_MISALIGN = 1,
+	parameter [ 0:0] CATCH_ILLINSN = 1,
+	parameter [ 0:0] ENABLE_PCPI = 0,
+	parameter [ 0:0] ENABLE_MUL = 0,
+	parameter [ 0:0] ENABLE_FAST_MUL = 0,
+	parameter [ 0:0] ENABLE_DIV = 0,
+	parameter [ 0:0] ENABLE_IRQ = 0,
+	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
+	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
+	parameter [ 0:0] ENABLE_TRACE = 0,
+	parameter [ 0:0] REGS_INIT_ZERO = 0,
+	parameter [31:0] MASKED_IRQ = 32'h 0000_0000,
+	parameter [31:0] LATCHED_IRQ = 32'h ffff_ffff,
+	parameter [31:0] PROGADDR_RESET = 32'h 0000_0000,
+	parameter [31:0] PROGADDR_IRQ = 32'h 0000_0010,
+	parameter [31:0] STACKADDR = 32'h ffff_ffff
+) (
+	output trap,
+
+	// Wishbone interfaces
+	input wb_rst_i,
+	input wb_clk_i,
+
+	output reg [31:0] wbm_adr_o,
+	output reg [31:0] wbm_dat_o,
+	input [31:0] wbm_dat_i,
+	output reg wbm_we_o,
+	output reg [3:0] wbm_sel_o,
+	output reg wbm_stb_o,
+	input wbm_ack_i,
+	output reg wbm_cyc_o,
+
+	// Pico Co-Processor Interface (PCPI)
+	output        pcpi_valid,
+	output [31:0] pcpi_insn,
+	output [31:0] pcpi_rs1,
+	output [31:0] pcpi_rs2,
+	input         pcpi_wr,
+	input  [31:0] pcpi_rd,
+	input         pcpi_wait,
+	input         pcpi_ready,
+
+	// IRQ interface
+	input  [31:0] irq,
+	output [31:0] eoi,
+
+`ifdef RISCV_FORMAL
+	output        rvfi_valid,
+	output [63:0] rvfi_order,
+	output [31:0] rvfi_insn,
+	output        rvfi_trap,
+	output        rvfi_halt,
+	output        rvfi_intr,
+	output [ 4:0] rvfi_rs1_addr,
+	output [ 4:0] rvfi_rs2_addr,
+	output [31:0] rvfi_rs1_rdata,
+	output [31:0] rvfi_rs2_rdata,
+	output [ 4:0] rvfi_rd_addr,
+	output [31:0] rvfi_rd_wdata,
+	output [31:0] rvfi_pc_rdata,
+	output [31:0] rvfi_pc_wdata,
+	output [31:0] rvfi_mem_addr,
+	output [ 3:0] rvfi_mem_rmask,
+	output [ 3:0] rvfi_mem_wmask,
+	output [31:0] rvfi_mem_rdata,
+	output [31:0] rvfi_mem_wdata,
+`endif
+
+	// Trace Interface
+	output        trace_valid,
+	output [35:0] trace_data,
+
+	output mem_instr
+);
+	wire        mem_valid;
+	wire [31:0] mem_addr;
+	wire [31:0] mem_wdata;
+	wire [ 3:0] mem_wstrb;
+	reg         mem_ready;
+	reg [31:0] mem_rdata;
+
+	wire clk;
+	wire resetn;
+
+	assign clk = wb_clk_i;
+	assign resetn = ~wb_rst_i;
+
+	picorv32 #(
+		.ENABLE_COUNTERS     (ENABLE_COUNTERS     ),
+		.ENABLE_COUNTERS64   (ENABLE_COUNTERS64   ),
+		.ENABLE_REGS_16_31   (ENABLE_REGS_16_31   ),
+		.ENABLE_REGS_DUALPORT(ENABLE_REGS_DUALPORT),
+		.TWO_STAGE_SHIFT     (TWO_STAGE_SHIFT     ),
+		.BARREL_SHIFTER      (BARREL_SHIFTER      ),
+		.TWO_CYCLE_COMPARE   (TWO_CYCLE_COMPARE   ),
+		.TWO_CYCLE_ALU       (TWO_CYCLE_ALU       ),
+		.COMPRESSED_ISA      (COMPRESSED_ISA      ),
+		.CATCH_MISALIGN      (CATCH_MISALIGN      ),
+		.CATCH_ILLINSN       (CATCH_ILLINSN       ),
+		.ENABLE_PCPI         (ENABLE_PCPI         ),
+		.ENABLE_MUL          (ENABLE_MUL          ),
+		.ENABLE_FAST_MUL     (ENABLE_FAST_MUL     ),
+		.ENABLE_DIV          (ENABLE_DIV          ),
+		.ENABLE_IRQ          (ENABLE_IRQ          ),
+		.ENABLE_IRQ_QREGS    (ENABLE_IRQ_QREGS    ),
+		.ENABLE_IRQ_TIMER    (ENABLE_IRQ_TIMER    ),
+		.ENABLE_TRACE        (ENABLE_TRACE        ),
+		.REGS_INIT_ZERO      (REGS_INIT_ZERO      ),
+		.MASKED_IRQ          (MASKED_IRQ          ),
+		.LATCHED_IRQ         (LATCHED_IRQ         ),
+		.PROGADDR_RESET      (PROGADDR_RESET      ),
+		.PROGADDR_IRQ        (PROGADDR_IRQ        ),
+		.STACKADDR           (STACKADDR           )
+	) picorv32_core (
+		.clk      (clk   ),
+		.resetn   (resetn),
+		.trap     (trap  ),
+
+		.mem_valid(mem_valid),
+		.mem_addr (mem_addr ),
+		.mem_wdata(mem_wdata),
+		.mem_wstrb(mem_wstrb),
+		.mem_instr(mem_instr),
+		.mem_ready(mem_ready),
+		.mem_rdata(mem_rdata),
+
+		.pcpi_valid(pcpi_valid),
+		.pcpi_insn (pcpi_insn ),
+		.pcpi_rs1  (pcpi_rs1  ),
+		.pcpi_rs2  (pcpi_rs2  ),
+		.pcpi_wr   (pcpi_wr   ),
+		.pcpi_rd   (pcpi_rd   ),
+		.pcpi_wait (pcpi_wait ),
+		.pcpi_ready(pcpi_ready),
+
+		.irq(irq),
+		.eoi(eoi),
+
+`ifdef RISCV_FORMAL
+		.rvfi_valid    (rvfi_valid    ),
+		.rvfi_order    (rvfi_order    ),
+		.rvfi_insn     (rvfi_insn     ),
+		.rvfi_trap     (rvfi_trap     ),
+		.rvfi_halt     (rvfi_halt     ),
+		.rvfi_intr     (rvfi_intr     ),
+		.rvfi_rs1_addr (rvfi_rs1_addr ),
+		.rvfi_rs2_addr (rvfi_rs2_addr ),
+		.rvfi_rs1_rdata(rvfi_rs1_rdata),
+		.rvfi_rs2_rdata(rvfi_rs2_rdata),
+		.rvfi_rd_addr  (rvfi_rd_addr  ),
+		.rvfi_rd_wdata (rvfi_rd_wdata ),
+		.rvfi_pc_rdata (rvfi_pc_rdata ),
+		.rvfi_pc_wdata (rvfi_pc_wdata ),
+		.rvfi_mem_addr (rvfi_mem_addr ),
+		.rvfi_mem_rmask(rvfi_mem_rmask),
+		.rvfi_mem_wmask(rvfi_mem_wmask),
+		.rvfi_mem_rdata(rvfi_mem_rdata),
+		.rvfi_mem_wdata(rvfi_mem_wdata),
+`endif
+
+		.trace_valid(trace_valid),
+		.trace_data (trace_data)
+	);
+
+	localparam IDLE = 2'b00;
+	localparam WBSTART = 2'b01;
+	localparam WBEND = 2'b10;
+
+	reg [1:0] state;
+
+	wire we;
+	assign we = (mem_wstrb[0] | mem_wstrb[1] | mem_wstrb[2] | mem_wstrb[3]);
+
+	always @(posedge wb_clk_i) begin
+		if (wb_rst_i) begin
+			wbm_adr_o <= 0;
+			wbm_dat_o <= 0;
+			wbm_we_o <= 0;
+			wbm_sel_o <= 0;
+			wbm_stb_o <= 0;
+			wbm_cyc_o <= 0;
+			state <= IDLE;
+		end else begin
+			case (state)
+				IDLE: begin
+					if (mem_valid) begin
+						wbm_adr_o <= mem_addr;
+						wbm_dat_o <= mem_wdata;
+						wbm_we_o <= we;
+						wbm_sel_o <= mem_wstrb;
+
+						wbm_stb_o <= 1'b1;
+						wbm_cyc_o <= 1'b1;
+						state <= WBSTART;
+					end else begin
+						mem_ready <= 1'b0;
+
+						wbm_stb_o <= 1'b0;
+						wbm_cyc_o <= 1'b0;
+						wbm_we_o <= 1'b0;
+					end
+				end
+				WBSTART:begin
+					if (wbm_ack_i) begin
+						mem_rdata <= wbm_dat_i;
+						mem_ready <= 1'b1;
+
+						state <= WBEND;
+
+						wbm_stb_o <= 1'b0;
+						wbm_cyc_o <= 1'b0;
+						wbm_we_o <= 1'b0;
+					end
+				end
+				WBEND: begin
+					mem_ready <= 1'b0;
+
+					state <= IDLE;
+				end
+				default:
+					state <= IDLE;
+			endcase
+		end
+	end
+endmodule
+
 module four_stage_signed_35x35_multiply(
      input clock,
      input [34:0] A,
@@ -2575,27 +3038,43 @@ module four_stage_signed_35x35_multiply(
      output reg [69:0] P);
 
 // Pipeline state 0:  Perform all multiplies
-wire [35:0] p0a, p2a, p3a;
-wire [33:0] p1a;
-MULT18X18S mul0 (.C(clock), .CE(1'b1), .R(1'b0), .P(p0a),
-.A(A[34:17]),
-.B(B[34:17]));
-MULT18X18S mul1 (.C(clock), .CE(1'b1), .R(1'b0), .P(p1a),
-.A({1'b0,
-A[16:0]}), .B({1'b0, B[16:0]}));
-MULT18X18S mul2 (.C(clock), .CE(1'b1), .R(1'b0), .P(p2a),
-.A(A[34:17]),
-.B({1'b0, B[16:0]}));
-MULT18X18S mul3 (.C(clock), .CE(1'b1), .R(1'b0), .P(p3a),
-.A({1'b0,
-A[16:0]}), .B(B[34:17]));
+	wire [35:0] p0a, p2a, p3a, p1a;
+	//wire [33:0] p1a;
+	// MULT18X18S mul0 (.C(clock), .CE(1'b1), .R(1'b0), .P(p0a),
+	// .A(A[34:17]),
+	// .B(B[34:17]));
+	// MULT18X18S mul1 (.C(clock), .CE(1'b1), .R(1'b0), .P(p1a),
+	// .A({1'b0,A[16:0]}), .B({1'b0, B[16:0]}));
+	// MULT18X18S mul2 (.C(clock), .CE(1'b1), .R(1'b0), .P(p2a),
+	// .A(A[34:17]),.B({1'b0, B[16:0]}));
+	// MULT18X18S mul3 (.C(clock), .CE(1'b1), .R(1'b0), .P(p3a),
+	// .A({1'b0,A[16:0]}), .B(B[34:17]));
+	// MULT_MACRO: Multiply Function implemented in a DSP48E
+	// 7 Series
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst0 (
+	.A(A[34:17]), .B(B[34:17]),.P(p0a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst1 (
+	.A({1'b0,A[16:0]}), .B({1'b0,B[16:0]}),.P(p1a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst2 (
+	.A(A[34:17]), .B({1'b0, B[16:0]}),.P(p2a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+	MULT_MACRO #(.DEVICE("VIRTEX6"),.LATENCY(3),.WIDTH_A(18),.WIDTH_B(18)) 
+	MULT_MACRO_inst3 (
+	.A({1'b0,A[16:0]}), .B(B[34:17]),.P(p3a),
+	.CE(1'b1),.RST(1'b0),.CLK(clock));
+
 
 // Pipeline stage 1:  Sum middle terms
 reg [35:0] p0b, p2b;
 reg [33:0] p1b;
 always @(posedge clock) begin
      p0b <= p0a;
-     p1b <= p1a;
+     p1b <= p1a[33:0];
      p2b <= p2a + p3a;
 end
 

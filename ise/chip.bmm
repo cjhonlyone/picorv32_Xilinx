@@ -1,8 +1,0 @@
-ADDRESS_SPACE RISCV RAMB16 [0x00000000:0x00001FFF]
-    BUS_BLOCK
-        _top/_ram_2k_32/_bram0/Mram_mem [7:0] ;
-        _top/_ram_2k_32/_bram1/Mram_mem [15:8] ;
-        _top/_ram_2k_32/_bram2/Mram_mem [23:16] ;
-        _top/_ram_2k_32/_bram3/Mram_mem [31:24] ;
-    END_BUS_BLOCK;
-END_ADDRESS_SPACE;

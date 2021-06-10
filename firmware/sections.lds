@@ -11,17 +11,46 @@ means.
 /*
 MEMORY {
 
-	mem : ORIGIN = 0x00000000, LENGTH = 0x0000c000
-	mem : ORIGIN = 0x00000000, LENGTH = 0x00018000
-}
-*/
+	code_mem(rx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
+	data_mem(!rx) : ORIGIN = 0x00004000, LENGTH = 0x00004000
+}*/
+
+
 SECTIONS {
-	.memory : {
-		. = 0x000000;
-		start*(.text);
-		*(.text);
-		*(*);
-		end = .;
-		. = ALIGN(4);
-	}/* > mem*/
+    /* The program code and other data */
+    .text :
+    {
+        . = ALIGN(4);
+        *(.text)           /* .text sections (code) */
+        *(.text*)          /* .text* sections (code) */
+        *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+        *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+        *(.srodata)        /* .rodata sections (constants, strings, etc.) */
+        *(.srodata*)       /* .rodata* sections (constants, strings, etc.) */
+        . = ALIGN(4);
+    } 
+
+    . = 0x10000;   /* 16KB */
+    /* This is the initialized data section */
+    .data :
+    {
+        . = ALIGN(4);
+        *(.data)           /* .data sections */
+        *(.data*)          /* .data* sections */
+        *(.sdata)           /* .sdata sections not used */ 
+        *(.sdata*)          /* .sdata* sections not used */
+        . = ALIGN(4);
+    }
+
+    /* Uninitialized data section */
+    .bss :
+    {
+        . = ALIGN(4);
+        *(.bss)
+        *(.bss*)
+        *(.sbss)
+        *(.sbss*)
+        /* *(COMMON)  what fuck this is */
+        . = ALIGN(4);
+    }
 }

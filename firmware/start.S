@@ -6,11 +6,6 @@
 // means.
 
 #define ENABLE_QREGS
-//#define ENABLE_HELLO
-//#define ENABLE_RVTST
-//#define ENABLE_SIEVE
-//#define ENABLE_MULTST
-//#define ENABLE_STATS
 
 #ifndef ENABLE_QREGS
 #  undef ENABLE_RVTST
@@ -21,24 +16,13 @@
 // will save the rest if necessary. I.e. skip x3, x4, x8, x9, and x18-x27.
 #undef ENABLE_FASTIRQ
 
-#def ENABLE_FASTIRQ
+//#def ENABLE_FASTIRQ
 
 #include "custom_ops.S"
 
-	.section .text
+.section .text
 	.global irq
-	//.global hello
-	//.global sieve
-	//.global multest
-	.global hard_mul
-	.global hard_mulh
-	.global hard_mulhsu
-	.global hard_mulhu
-	.global hard_div
-	.global hard_divu
-	.global hard_rem
-	.global hard_remu
-	//.global stats
+	.global stats
 	.global enable_timer
 	.global main
 
@@ -216,14 +200,10 @@ irq_regs:
 irq_stack:
 
 
-led:	
-	addi x1, zero, 0
-	addi	x1,x1,1000
-	picorv32_timer_insn(zero, x1)
-
-noop:
-	nop
-	j noop	
+# led:	
+# 	addi x1, zero, 0
+# 	addi	x1,x1,1000
+# 	picorv32_timer_insn(zero, x1)
 
 /* Main program
  **********************************/
@@ -263,128 +243,11 @@ start:
 	addi x30, zero, 0
 	addi x31, zero, 0
 
-#ifdef ENABLE_HELLO
 	/* set stack pointer */
-	lui sp,(8*1024)>>12
-
-	/* call hello C code */
-	jal ra,hello
-#endif
-	
-	/* set stack pointer */
-	lui sp,(8*1024)>>12
+	lui sp,(64*1024)>>12
 
 	/* call hello C code */
 	jal ra,main
-
-	/* running tests from riscv-tests */
-
-#ifdef ENABLE_RVTST
-#  define TEST(n) \
-	.global n; \
-	addi x1, zero, 1000; \
-	picorv32_timer_insn(zero, x1); \
-	jal zero,n; \
-	.global n ## _ret; \
-	n ## _ret:
-#else
-#  define TEST(n) \
-	.global n ## _ret; \
-	n ## _ret:
-#endif
-/*
-	TEST(lui)
-	TEST(auipc)
-	TEST(j)
-	TEST(jal)
-	TEST(jalr)
-
-	TEST(beq)
-	TEST(bne)
-	TEST(blt)
-	TEST(bge)
-	TEST(bltu)
-	TEST(bgeu)
-
-	TEST(lb)
-	TEST(lh)
-	TEST(lw)
-	TEST(lbu)
-	TEST(lhu)
-
-	TEST(sb)
-	TEST(sh)
-	TEST(sw)
-
-	TEST(addi)
-	TEST(slti) // also tests sltiu
-	TEST(xori)
-	TEST(ori)
-	TEST(andi)
-	TEST(slli)
-	TEST(srli)
-	TEST(srai)
-
-	TEST(add)
-	TEST(sub)
-	TEST(sll)
-	TEST(slt) // what is with sltu ?
-	TEST(xor)
-	TEST(srl)
-	TEST(sra)
-	TEST(or)
-	TEST(and)
-
-	TEST(mulh)
-	TEST(mulhsu)
-	TEST(mulhu)
-	TEST(mul)
-
-	TEST(div)
-	TEST(divu)
-	TEST(rem)
-	TEST(remu)
-
-	TEST(simple)
-
-*/
-	/* set stack pointer */
-	lui sp,(128*1024)>>12
-
-	/* set gp and tp */
-	lui gp, %hi(0xdeadbeef)
-	addi gp, gp, %lo(0xdeadbeef)
-	addi tp, gp, 0
-
-#ifdef ENABLE_SIEVE
-	/* call sieve C code */
-	jal ra,sieve
-#endif
-#ifdef ENABLE_MULTST
-	/* call multest C code */
-	jal ra,multest
-#endif
-#ifdef ENABLE_STATS
-	/* call stats C code */
-	jal ra,stats
-#endif
-
-	/* print "DONE\n" */
-	lui a0,0x10000000>>12
-	addi a1,zero,'D'
-	addi a2,zero,'O'
-	addi a3,zero,'N'
-	addi a4,zero,'E'
-	addi a5,zero,'\n'
-	sw a1,0(a0)
-	sw a2,0(a0)
-	sw a3,0(a0)
-	sw a4,0(a0)
-	sw a5,0(a0)
-
-	li a0, 0x20000000
-	li a1, 123456789
-	sw a1,0(a0)
 
 nooop:
 	nop
@@ -392,42 +255,6 @@ nooop:
 
 	/* trap */
 	ebreak
-
-
-/* Hard mul functions for multest.c
- **********************************/
-
-hard_mul:
-	mul a0, a0, a1
-	ret
-
-hard_mulh:
-	mulh a0, a0, a1
-	ret
-
-hard_mulhsu:
-	mulhsu a0, a0, a1
-	ret
-
-hard_mulhu:
-	mulhu a0, a0, a1
-	ret
-
-hard_div:
-	div a0, a0, a1
-	ret
-
-hard_divu:
-	divu a0, a0, a1
-	ret
-
-hard_rem:
-	rem a0, a0, a1
-	ret
-
-hard_remu:
-	remu a0, a0, a1
-	ret
 
 enable_timer:
 	picorv32_timer_insn(zero, a0)

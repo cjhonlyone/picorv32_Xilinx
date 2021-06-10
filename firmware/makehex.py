@@ -9,13 +9,17 @@
 
 from sys import argv
 
+import os
+if not os.path.exists('hex/'):
+    os.mkdir('hex/')
+
 binfile = argv[1]
 ramsize = int(argv[2])
 blockramsize = int(argv[3])
 
-#binfile = 'firmware.bin' #argv[1]
-#ramsize = 131072 #int(argv[2])
-#blockramsize = 4096 #int(argv[3])
+# binfile = 'firmware.bin' #argv[1]
+# ramsize = 131072 #int(argv[2])
+# blockramsize = 4096 #int(argv[3])
 
 ramnum = int(ramsize/blockramsize)
 ramidx = 0
@@ -26,17 +30,17 @@ with open(binfile, "rb") as f:
 assert len(bindata) < 4*ramsize
 assert len(bindata) % 4 == 0
 
-f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f0 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f1 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f2 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
-f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+f3 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
 ramidx = ramidx + 1
 
-blockramsize = blockramsize*4
-
+blockramsize = blockramsize
+ramsize = ramsize >> 2
 for i in range(ramsize):
     if i < len(bindata) // 4:
         w = bindata[4*i : 4*i+4]
@@ -56,11 +60,16 @@ for i in range(ramsize):
         f2.close()
         f3.close()
         if (ramidx != ramnum) :
-            f0 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f0 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f1 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f1 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f2 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f2 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
-            f3 = open(binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
+            f3 = open('hex/'+binfile[0:-1-3]+'ram%02d'%(ramidx)+'.hex', 'w')
             ramidx = ramidx + 1
+
+f0 = open('hex/firmwarezero.hex', 'w')
+for i in range(4096):
+    f0.write("00\n")
+f0.close()
